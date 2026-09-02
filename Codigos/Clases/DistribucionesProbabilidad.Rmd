@@ -1,0 +1,52 @@
+---
+title: "DistribucionesProbabilidad"
+author: "Dana Amador"
+date: '`r Sys.Date()`'
+output:
+  html_document: default
+  word_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Distribución Binomial
+
+Aprenderemos a usar R para calcular probabilidades de una distribución binomial.
+
+```{r}
+# P(X>5) x~binom(n=8,p=0.2)
+resultado <- pbinom(5,8,0.2, lower.tail = FALSE) # P(X>5)
+resultado2 <- 1 - pbinom(5,8,0.2, lower.tail = TRUE) # 1 - P(X<=5)
+print(resultado)
+print(resultado2)
+```
+
+### P(2 < X < 5)
+```{r}
+resultado3 <- pbinom(4,8,0.2,lower.tail = TRUE) - pbinom(2,8,0.2,lower.tail = TRUE)
+print(resultado3)
+```
+
+```{r}
+# Otra forma:
+resultado4 <- dbinom(x=3,size=8,p=0.2) +dbinom(x=4,size=8,p=0.2)
+print(resultado4)
+```
+
+### P(X>5|X>=2)
+```{r}
+numerador <- pbinom(5,8,0.2, lower.tail = FALSE) # P(X>5)
+denominador <- 1 - pbinom(1,8,0.2, lower.tail = TRUE) # P(X>1) = P(X>=2)
+resultado5 <- numerador/denominador
+print(resultado5)
+```
+
+```{r}
+numerador2 <- dbinom(6,8,0.2) + dbinom(7,8,0.2) + dbinom(8,8,0.2)
+denominador2 <- dbinom(2,8,0.2) + dbinom(3,8,0.2) + dbinom(4,8,0.2) + dbinom(5,8,0.2) + dbinom(6,8,0.2) + dbinom(7,8,0.2) + dbinom(8,8,0.2)
+resultado6 <- numerador2/denominador2
+print(resultado6)
+```
