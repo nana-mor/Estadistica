@@ -1,0 +1,571 @@
+---
+title: "Probabilidad con R"
+author: "Dana Amador"
+date: "2026-09-22"
+output:
+  pdf_document:
+    toc: true
+  html_document:
+    toc: true
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Actividad 1: Reconoce la relación entre eventos
+
+Supón que $P(A)=0.40$, $P(B)=0.30$ y $P(A\cap B)=0.12$.
+
+1. Comprueba si $A$ y $B$ son independientes.
+\begin{align*}
+  P(A\cap B) &= 0.12 \\
+  &=(0.30)(0.40)\\
+  &=P(A)P(B)\\
+  \Rightarrow P(A\cap B) &= P(A)P(B)
+\end{align*}
+  $\therefore A$ y $B$ son independientes
+  
+2. Calcula $P(A|B)$.
+\begin{align*}
+  P(A|B) &= \frac{P(A \cap B)}{P(B)}\\
+  &= \frac{0.12}{0.30}\\
+  &= 0.40\\
+  &= P(A)
+\end{align*}
+  $\therefore P(A|B)=P(A)$
+
+3. Explica qué información aporta la condición B sobre la probabilidad de A.
+
+No aporta ninguna información, puesto que son independientes. Esto se puede ver en el punto 2, ya que la ocurrencia de $B$ no afecta la probabilidad de ocurrencia de $A$.
+
+# Actividad 2: Explora la binomial
+
+Utiliza $X \sim Binomial(20,0.30)$.
+
+  ```{r}
+  n <- 20
+  p <-0.3
+  ```
+
+1. Calcula $P(X=5)$.
+
+    ```{r}
+    resultado = dbinom(5,n,p)
+    print(resultado)
+    ```
+
+2. Calcula $P(X\leq5)$.
+
+    ```{r}
+    resultado = pbinom(5,n,p,TRUE)
+    print(resultado)
+    ```
+
+3. Calcula $P(X>5)$.
+
+    ```{r}
+    # P(X > 5) =  1 - P(X <= 5)
+    resultado = 1 - pbinom(5,n,p,TRUE)
+    print(resultado)
+    ```
+
+4. Calcula $P(4\leq X \leq 8)$.
+
+    ```{r}
+    # P(4 <= X <= 8) = P(X <= 8) - P(X < 4) = P(X <= 8) - P(X <= 3)
+    resultado = pbinom(8,n,p,TRUE) - pbinom(3,n,p,TRUE)
+    print(resultado)
+    ```
+    
+5. Grafica la distribución.
+
+    ```{r}
+    x <- 0:n
+    prob <- dbinom(x, n, p)
+    
+    barplot(
+      prob,
+      names.arg = x,
+      xlab = "x",
+      ylab = "f(x)",
+      main = "Binomial(20,0.30)"
+    )
+    ```
+    
+    
+6. Cambia $p$ a $0.5$ y vuelve a graficar.
+
+    ```{r}
+    p <- 0.5
+    x <- 0:n
+    prob <- dbinom(x, n, p)
+    
+    barplot(
+      prob,
+      names.arg = x,
+      xlab = "x",
+      ylab = "f(x)",
+      main = "Binomial(20,0.50)"
+    )
+    ```
+7. Describe qué cambia en la distribución.
+
+    Cuando $p=0.3$  vemos que la gráfica se concentra al inicio de los valores de $x$, mientras que cuando $p=0.5$ se concentran más bien en el centro. Cuando $p=0.5$ la moda coincide con la mediana. 
+    
+# Actividad 3: Poisson
+Para $X \sim Poisson(4)$
+
+```{r}
+lambda <- 4
+```
+1. Calcula $P(X=2)$.
+
+    ```{r}
+    resultado <- dpois(2,lambda)
+    print(resultado)
+    ```
+
+2. Calcula $P(X\leq 2)$.
+
+    ```{r}
+    resultado <- ppois(2,lambda,TRUE)
+    print(resultado)
+    ```
+    
+3. Calcula $P(X > 8)$.
+
+    ```{r}
+    # P(X > 8) = 1 - P(X <= 8)
+    resultado <- 1 - ppois(8,lambda,TRUE)
+    print(resultado)
+    ```
+    
+4. Calcula $P(3 \leq X \leq 6)$.
+
+    ```{r}
+    # P(3 <= X <= 6) = P(X <= 6) - P(X < 3) = P(X <= 6) - P(X <= 2)
+    resultado <- ppois(6,lambda,TRUE) - ppois(2,lambda,TRUE)
+    print(resultado)
+    ```    
+    
+5. Grafica la distribución
+
+    ```{r}
+    x <- 0:20
+    prob <- dpois(x,lambda)
+    
+    barplot(
+      prob,
+      names.arg = x,
+      xlab = "x",
+      ylab = "y", 
+      main = "Poisson(4)"
+    )
+    ``` 
+    
+6. Cambia $\lambda$ a $8$. ¿Qué observas?
+  
+    ```{r}
+      lambda <- 8
+      x <- 0:20
+      prob <- dpois(x,lambda)
+      
+      barplot(
+      prob,
+      names.arg = x,
+      xlab = "x",
+      ylab = "y", 
+      main = "Poisson(8)"
+    )
+    ``` 
+Para empezar, cuando el valor de $\lambda$ aumenta, la probabilidad se distribuye más entre los primeros valores $x$, es decir, la dispersión aumenta a medida que $\lambda$ aumenta. Además, se puede ver que en ambos casos la moda coincide con $\lambda$ y con $\lambda-1$. 
+
+# Actividad 4: Uniforme
+Para $X \sim U(420,460)$:
+
+```{r}
+min = 420
+max = 460
+``` 
+
+1. Calcula $P(X<430)$.
+    ```{r}
+    resultado = punif(430,min,max,TRUE)
+    print(resultado)
+    ``` 
+
+2. Calcula $P(425<X<435)$.
+
+    ```{r}
+    # P(425 < X < 435) = P(X < 435) - P(X <= 425)
+    resultado = punif(435,min,max,TRUE) - punif(425,min,max,TRUE)
+    print(resultado)
+    ``` 
+    
+3. Calcula $P(X>450)$.
+
+    ```{r}
+    # P(X > 450) = 1 - P(X < 450)
+    resultado = 1 - punif(450,min,max,TRUE)
+    print(resultado)
+    ``` 
+
+4. Representa gráficamente la densidad.
+
+    ```{r}
+    a <- 420
+    b <- 460
+    x <- seq(a, b, length.out = 500)
+
+    plot(
+      x,
+      dunif(x, min = a, max = b),
+      type = "l",
+      xlab = "x",
+      ylab = "f(x)",
+      main = "Distribución Uniforme(420, 460)"
+    )
+    ``` 
+
+5. Explica por qué la probabilidad puede interpretarse como un área.
+
+Porque para calcularla es necesario utilizar una integral, la cual representa geométricamente el área bajo la curva.
+
+# Actividad 5: Normal
+
+Sea $X \sim N,(45,8^2)$.
+
+```{r}
+mu <- 45
+sigma <- 8
+```
+
+1. Calcula $P(X \leq 58)$
+
+    ```{r}
+      resultado <- pnorm(58, mean = mu, sd = sigma, TRUE)
+      print(resultado)
+    ```
+
+2. Calcula $P(X > 58)$.
+
+    ```{r}
+      resultado <- pnorm(58, mean = mu, sd = sigma, FALSE)
+      print(resultado)
+    ```
+
+3. Calcula $P(40 < X < 50)$.
+
+    ```{r}
+      resultado <- pnorm(50, mean = mu, sd = sigma, TRUE) - pnorm(40, mean = mu, sd = sigma, TRUE)
+      print(resultado)
+    ```
+
+4. Estandariza el valor $58$.
+
+    ```{r}
+      x <- 58
+      z <- (x - mu)/sigma
+      print(z)
+    ```
+
+5. Verifica mediante R que el cálculo con $X$ y con $Z$ coincide.
+
+    ```{r}
+      resultado1 <- pnorm(x, mean = mu, sd = sigma, TRUE) # N(45, 8^2)
+      print(resultado1)
+      resultado2 <- pnorm(z, mean = 0, sd = 1, TRUE) # N(0, 1)
+      print(resultado2)
+    ```
+
+6. Grafica la distribución y representa la región correspondiente a $40<X<50$.
+
+    ```{r}
+        
+        x <- seq(mu - 4*sigma, mu + 4*sigma, length.out = 500)
+        
+        y <- dnorm(x, mean = mu, sd = sigma)
+        
+        plot(
+          x, y,
+          type = "l",
+          xlab = "x",
+          ylab = "f(x)",
+          main = "N(45,8^2)"
+        )
+        
+        x_area <- seq(40, 50, length.out = 300)
+        y_area <- dnorm(x_area, mean = mu, sd = sigma)
+        
+        polygon(
+          c(40, x_area, 50),
+          c(0, y_area, 0),
+          col = adjustcolor("skyblue", alpha.f = 0.5),
+          border = NA
+        )
+        
+        abline(v = c(40, 50), lty = 2)
+        
+    ```
+
+
+# Actividad 6: Exponencial
+
+Sea $X \sim Exponencial(2)$, donde el tiempo está medido en miles de horas.
+
+```{r}
+  lambda <- 2
+```
+
+1. Calcula $P(X >0.5)$.
+
+    ```{r}
+    resultado <- pexp(0.5, lambda, FALSE)
+    print(resultado)
+    ```
+
+2. Calcula $P(X>1.2|x>0.7)$ utilizando la definición de probabilidad condicional.
+
+    ```{r}
+    P12 <- pexp(1.2, lambda, FALSE)
+    P07 <- pexp(0.7, lambda, FALSE)
+    resultado <- P12/P07
+    print(resultado)
+    ```
+
+3. Compara ambos resultados.
+
+    ```{r}
+    print(pexp(0.5, lambda, FALSE) == P12/P07)
+    ```
+
+    Podemos ver que ambos resultados son iguales.
+
+4. Explica con tus palabras qué significa la falta de memoria.
+
+    La probabilidad de que ocurra un evento en un momento determinado es independiente de cuánto tiempo ya transcurrió.
+
+5. Grafica la densidad exponencial y describe su forma.
+
+    ```{r}
+        x <- seq(0,2, length.out = 100)
+        y <- dexp(x,lambda)
+        
+        plot(
+          x, y,
+          type = "l",
+          xlab = "x",
+          ylab = "f(x)",
+          main = "Exponencial(2)"
+        )
+    ```
+    La forma de la función indica que la probabilidad de ocurrencia de un evento es muy alta al principio del itervalo y va disminuyendo conforme avanza el tiempo.
+    
+
+# Actividad 7: Región y marginales
+
+Para la densidad anterior, trabaja con una región distinta de la que aparece en la tarea:
+
+\begin{equation*}
+A = \{(x,y):0<x<2/3, 1/3<y<2/3\}
+\end{equation*}
+
+1. Verifica matemáticamente que es una densidad válida.
+
+  \begin{align*}
+  \int \int f_{X,Y}(x,y) \ dy \ dx &= \int_0^{1} \int_{0}^{1} x+y\ dy\ dx\\
+  &= \int_0^{1} \left[ xy+\frac{y^2}{2} \right]_{0}^{1} dx \\
+  &= \int_0^{1} \left[ x(1)+\frac{(1)^2}{2} \right] dx \\
+  &= \int_0^{1}  x+\frac{1}{2}  dx \\
+  &= \left[ \frac{x^2+x}{2} \right]_0^{1} \\
+  &= \frac{1+1}{2}  \\
+  &= 1
+  \end{align*}
+
+2. Calcula $P((X,Y) \in A)$.
+
+  \begin{align*}
+  \int \int f_{X,Y}(x,y) \ dy \ dx &= \int_0^{2/3} \int_{1/3}^{2/3} x+y\ dy\ dx\\
+  &= \int_0^{2/3} \left[ xy+\frac{y^2}{2} \right]_{1/3}^{2/3} dx \\
+  &= \int_0^{2/3} \left[ x(2/3)+\frac{(2/3)^2}{2}-x(1/3)-\frac{(1/3)^2}{2} \right] dx \\
+  &= \int_0^{2/3} \left[ \frac{2x}{3}+\frac{4}{18}-\frac{x}{3}-\frac{1}{18} \right] dx \\
+  &= \int_0^{2/3} \left[ \frac{x}{3}+\frac{1}{6} \right] dx \\
+  &= \frac{1}{6}\int_0^{2/3} 2x+1 \ dx \\
+  &= \frac{1}{6}\left[ x^2+x \right]_0^{2/3} \\
+  &= \frac{1}{6}\left[ (2/3)^2+(2/3) \right] \\
+  &= \frac{1}{6}\left[ 10/9 \right] \\
+  &= \frac{5}{27} =0.185 185 185
+  \end{align*}
+
+3. Obtén $f_X(x)$.
+
+  \begin{align*}
+  f_X(x) &= \int  f_{X,Y}(x,y) \ dy \\  &= \int_{0}^{1} x+y\ dy\ \\
+  &= \left[ xy+\frac{y^2}{2} \right]_{0}^{1} \\
+  &= x(1)+\frac{(1)^2}{2} \\
+  &= x+\frac{1}{2} \\
+  \end{align*}
+    $\therefore f_X(x)= \begin{cases}
+    x+\frac{1}{2} \quad 0\leq x\leq 1,\\
+    0 \quad \quad e.o.c.
+    \end{cases}$
+
+
+4. Obtén $f_Y(y)$.
+  
+  \begin{align*}
+  f_Y(y) &= \int  f_{X,Y}(x,y) \ dx \\  &= \int_{0}^{1} x+y\ dx\ \\
+  &= \left[ \frac{x^2}{2}+xy \right]_{0}^{1} \\
+  &= y(1)+\frac{(1)^2}{2} \\
+  &= y+\frac{1}{2} \\
+  \end{align*}
+    $\therefore f_Y(y)= \begin{cases}
+    y+\frac{1}{2} \quad 0\leq y\leq 1,\\
+    0 \quad \quad e.o.c.
+    \end{cases}$
+
+
+5. Describe qué cambia respecto al caso de una sola variable aleatoria.
+
+En el caso del cálculo de la probabilidad, cuando se trata de una sola variable aleatoria la probabilidad representa el área bajo la curva; en cambio, cuando se trata de 2 variables aleatorias la probabilidad representa el volumen bajo un plano en $\mathbb{R}^3$. Por otro lado, la función de probabilidad de una variable aleatoria describe el comportamiento de sólo esa variable, mientras que la función de probabilidad conjunta describe cómo interactúan las 2 variables en un mismo espacio muestral, lo que hace necesario que existan las marginales para aislar el comportamiento de cada una. 
+
+
+# Actividad Integradora
+
+## Caso A: Conteo
+
+Una máquina produce piezas con probabilidad de defecto $p = 0.08$. Se seleccionan $25$ piezas independientemente. Sea $X$ el número de piezas defectuosas.
+
+Calcula:
+
+\begin{equation*}
+P(X\leq 3)
+\end{equation*}
+
+Sol:
+
+En este caso tenemos que usar la distribución $Binom(n,p)$ con $n=25$ y $p=0.08$. Considerando el éxito como el evento "una pieza resulta defectuosa", se nos pide calcular la probabilidad de que haya 3 o menos éxitos, esto en R se representa:
+
+```{r}
+  n = 25
+  p = 0.08
+  resultado <- pbinom(q = 3, size = n, prob = p, TRUE)
+  print(resultado)
+```
+
+Después calcula
+
+\begin{equation*}
+P(X > 5)
+\end{equation*}
+
+Seguiremos usando la distribución $Binom(n,p)$ con $n=25$ y $p=0.08$. En este caso se nos pide calcular la probabilidad de que más de 5 piezas sean defectuosas, entonces:
+
+```{r}
+  resultado <- pbinom(q = 5, size = n, prob = p, FALSE)
+  print(resultado)
+```
+
+## Caso B: Variable Continua
+
+El tiempo de atención de un servicio se modela como:
+
+\begin{equation*}
+X \sim N(30,5^2)
+\end{equation*}
+
+Calcula:
+
+\begin{equation*}
+P(25<X<35)
+\end{equation*}
+
+Sol:
+
+```{r}
+mu <- 30
+sigma <- 5
+# P(25 < X < 35) = P(X < 35 ) - P(X <= 25)
+resultado <- pnorm(35, mean = mu, sd = sigma, TRUE) - pnorm(25, mean = mu, sd = sigma, TRUE)
+```
+
+Después grafica la densidad y representa visualmente la región correspondiente.
+
+```{r}
+    x <- seq(mu - sigma*4, mu+ sigma*4, length.out = 100)
+    y <- dnorm(x, mean = mu, sd = sigma)
+    
+
+    plot(
+      x, y,
+      type = "l",
+      xlab = "x",
+      ylab = "f(x)",
+      main = "N(30, 5^2)"
+    )
+    
+    x_area <- seq(25, 35, length.out = 300)
+    y_area <- dnorm(x_area, mean = mu, sd = sigma)
+    
+    polygon(
+      c(25, x_area, 35),
+      c(0, y_area, 0),
+      col = adjustcolor("skyblue", alpha.f = 0.5),
+      border = NA
+    )
+    
+
+    abline(v = c(25, 35), lty = 2)
+```
+
+## Caso C: Tiempo de vida
+
+Una variable $X$ tiene distribución exponencial con media 2 horas.
+
+1. Determina $\lambda$.
+
+Sabiendo que para $X \sim exp(\lambda)$
+
+\begin{equation*}
+f(x) = 
+  \begin{cases}
+  \lambda e^{-\lambda x} \quad x>0,\\
+  0 \quad e.o.c.
+  \end{cases}
+\end{equation*}
+
+tiene una media $\mu = \frac{1}{\lambda}$, tenemos entonces que $\lambda = \frac{1}{\mu} = \frac{1}{2} = 0.5$.
+
+```{r}
+lambda <- 1/2
+```
+
+2. Calcula $P(X>3)$.
+
+    ```{r}
+    resultado <- pexp(3, lambda, FALSE)
+    print(resultado)
+    ```
+
+3. Calcula $P(X>5|X>2)$.
+
+    ```{r}
+    # P( X > 5 | X > 2) = P( X > 5 ^ X > 2)/P(X > 2) = P( X > 5)/P(X > 2)
+    p5 <- pexp(5, lambda, FALSE) # P( X > 5)
+    p2 <- pexp(2, lambda, FALSE) # P( X > 2)
+    resultado <- p5/p2
+    print(resultado)
+    ```
+
+4. Comprueba la propiedad de falta de memoria.
+
+Es evidente que $P(X>5|X>2)=P(X>3)$, es decir, que sin importar que hayan transcurrido 2 horas, a partir del momento de la medición sólo importa lo que sucedan durante las siguientes 3. 
+
+
+
+
+
+
+    

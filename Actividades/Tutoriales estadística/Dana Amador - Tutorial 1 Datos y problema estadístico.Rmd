@@ -1,0 +1,361 @@
+---
+title: "Tutorial 1: De observaciones a datos estadísticos"
+subtitle: "Estadística I — Matemáticas Aplicadas y Computación"
+author: "Dra. Elizabeth Martínez Gómez"
+output:
+  html_document: 
+    toc: true
+    code_folding: show
+    highlight: tango
+    theme: readable
+---
+
+# Propósito
+
+En este tutorial no vamos a aprender “a usar R” como un fin en sí mismo. Vamos a utilizar R para responder una pregunta estadística:
+
+> **¿Qué información contienen realmente un conjunto de observaciones y cómo debemos organizarla antes de calcular cualquier estadística?**
+
+Trabajaremos con datos históricos y científicos del **NIST**. En particular, utilizaremos mediciones de Albert A. Michelson de 1879 sobre la velocidad de la luz y un conjunto de mediciones de diámetro producido por tres máquinas. El NIST incluye ambos conjuntos entre sus datos para métodos estadísticos. [Fuente NIST: conjunto de datos](https://www.itl.nist.gov/div898/handbook/datasets.html).
+
+## Antes de comenzar
+
+Necesitas:
+
+```{r setup, message=FALSE, warning=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+if (!requireNamespace("ggplot2", quietly = TRUE)) {
+  stop("Instala ggplot2 con install.packages('ggplot2') antes de continuar.")
+}
+library(ggplot2)
+```
+
+**Tiempo estimado:** 60–75 min de trabajo autónomo.
+
+---
+
+# 1. Un problema estadístico no empieza con `mean()`
+
+Considera el experimento histórico de Michelson. El conjunto contiene 100 observaciones de velocidad de la luz, temperatura del aire, día de observación, momento del día y conjunto de medición.
+
+El archivo original del NIST especifica que hay 100 observaciones y cinco variables: velocidad de la luz, temperatura, día, mañana/tarde y conjunto. [Fuente primaria: NIST, MICHELSO.DAT](https://www.itl.nist.gov/div898/handbook/datasets/MICHELSO.DAT).
+
+La primera pregunta no es “¿cuál es la media?”. Es:
+
+> **¿Qué representa una observación?**
+
+Una observación es una unidad de información correspondiente a una unidad estadística definida para el estudio.
+
+## Actividad 1 — Identifica la unidad estadística
+
+Sin ejecutar R todavía, responde:
+
+1. ¿Qué representa una fila del conjunto de Michelson?
+
+  Una medición de la velocidad de la luz, así como el estado de varias otras condiciones en cuanto al estado de la tierra que era relevante medir para el experimento.
+
+2. ¿Qué representa una variable?
+
+  Un aspecto del estado de la tierra al momento de hacer las mediciones, un factor que los científicos consideraban relevante o que podría modificar la velocidad de la luz. 
+
+3. ¿Cuál sería una pregunta descriptiva razonable?
+
+  ¿La temperatura de la tierra afecta la velocidad de la luz?
+
+4. ¿Qué pregunta NO puede responderse sólo con estos datos?
+
+  ¿La fuerza de gravedad afecta la velocidad de la luz?
+
+**Escribe tus respuestas antes de continuar.**
+
+---
+
+# 2. Importar datos reales
+
+Para mantener la trazabilidad, leeremos directamente el archivo original del NIST.
+
+```{r}
+
+setwd("/home/nani/Documents/Universidad/2027-I/Estadistica/Actividades/Tutoriales estadística")
+michelson <- read.csv("Datos/Dana Amador - MICHELSO.csv")
+attach(michelson)
+
+names(michelson)
+head(michelson)
+
+```
+
+```{r}
+
+# Cambiamos los nombres de las columnas originales
+names(michelson) <- c("velocidad", "temperatura_F", "dia", "ampm", "conjunto")
+
+head(michelson)
+```
+
+## ¿Qué acabamos de hacer?
+
+No hemos “analizado” todavía los datos.
+
+Hemos:
+
+1. localizado una fuente;
+2. leído el archivo;
+3. cambiado los nombres de variables;
+4. construido un `data.frame`.
+
+Esto es parte del trabajo estadístico.
+
+---
+
+# 3. Observaciones y variables
+
+```{r}
+dim(michelson)
+names(michelson)
+str(michelson)
+```
+
+Interpreta:
+
+- `dim()` → número de observaciones y variables;
+- `names()` → nombres de las variables;
+- `str()` → estructura y tipo de almacenamiento.
+
+## Actividad 2 — Inventario estadístico
+
+Completa esta tabla en tu cuaderno:
+
+| Variable | ¿Qué representa? | Tipo estadístico | Unidad/escala |
+|---|---|---|---|
+| velocidad |La velocidad de la luz | Cuantitativa | km/s|
+| temperatura_F |Temperatura del aire | Cuantitativa|Farenheit |
+| dia |Dias transcurridos desde el 5 de junio de 1879 | Cuantitativa |Días |
+| ampm |Si era mañana o noche al momento de la medición | Cualitativa Nominal|1 = AM, 2 = PM |
+| conjunto |A qué conjunto pertenece |Cualitativa Ordinal |Del 1 al 24 |
+
+**Importante:** distingue entre el tipo de dato almacenado por R y el tipo de variable desde el punto de vista estadístico.
+
+---
+
+# 4. Una variable numérica no es automáticamente “continua”
+
+Observa:
+
+```{r}
+summary(michelson)
+```
+
+Es tentador pensar:
+
+> “Si R muestra números, entonces es una variable cuantitativa continua”.
+
+No necesariamente.
+
+Por ejemplo, `dia` está codificado numéricamente, pero representa una **categoría temporal discreta**: día 1, día 3, etc.
+
+Esto anticipa un tema fundamental del Tema 1:
+
+> **La representación numérica de una variable no determina por sí sola qué operaciones estadísticas son apropiadas.**
+
+---
+
+# 5. Otro conjunto: mediciones de diámetro
+
+El NIST también proporciona un conjunto de 180 observaciones de diámetro tomadas con tres máquinas, con variables de máquina, día, horario, muestra y diámetro. [Fuente primaria: NIST, MACHINE.DAT](https://www.itl.nist.gov/div898/handbook/datasets/MACHINE.DAT).
+
+```{r}
+# Establecemos el directorio de trabajo para localizar los datos
+
+setwd("/home/nani/Documents/Universidad/2027-I/Estadistica/Actividades/Tutoriales estadística")
+
+dat <- read.csv("Datos/Dana Amador - MACHINE.csv")
+attach(dat)
+
+names(dat)
+
+head(dat)
+str(dat)
+dim(dat)
+```
+
+## Actividad 3 — La pregunta cambia cuando cambia el diseño
+
+Ahora tenemos:
+
+- `MACHINE`: máquina;
+- `DAY`: día;
+- `TIME`: mañana/tarde;
+- `SAMPLE`: número de muestra;
+- `DIAMETER`: diámetro medido.
+
+Formula **tres preguntas estadísticas distintas**:
+
+1. una pregunta sobre una sola variable;
+
+    ¿Cuál es el diámetro máximo observado?
+
+2. una pregunta para comparar grupos;
+
+    ¿A qué hora del día se encuentra el promedio menor de diámetro?
+
+3. una pregunta sobre asociación entre dos variables.
+
+    ¿A qué máquina le corresponde el diámetro máximo observado?
+
+No las respondas todavía. Sólo formula correctamente las preguntas.
+
+---
+
+# 6. Población, muestra, parámetro y estadística
+
+Supón que queremos estudiar el comportamiento de los diámetros producidos por las tres máquinas.
+
+Podemos distinguir:
+
+- **Población:** todas las piezas que nos interesa caracterizar bajo las condiciones del proceso.
+- **Muestra:** las 180 observaciones disponibles.
+- **Parámetro:** una cantidad numérica que caracteriza a la población.
+- **Estadística:** una cantidad calculada a partir de la muestra.
+
+Por ejemplo,
+
+\[
+\bar X=\frac{1}{n}\sum_{i=1}^n X_i
+\]
+
+es una estadística muestral.
+
+No debemos confundir:
+
+\[
+\bar X
+\]
+
+con el parámetro poblacional
+
+\[
+\mu.
+\]
+
+La distinción será esencial cuando lleguemos a inferencia estadística.
+
+---
+
+# 7. Calidad de datos antes del análisis
+
+Una práctica estadística responsable exige revisar:
+
+- valores faltantes;
+- valores imposibles;
+- codificaciones;
+- unidades;
+- duplicados;
+- errores de captura;
+- valores extremadamente inusuales.
+
+En este caso:
+
+```{r}
+colSums(is.na(dat))
+summary(dat)
+```
+
+## Actividad 4 — Auditoría inicial
+
+Escribe un pequeño informe de 5–8 líneas respondiendo:
+
+1. ¿Hay datos faltantes?
+2. ¿Qué variables son factores del proceso?
+3. ¿Cuál es la respuesta medida?
+4. ¿Qué información necesitarías conocer para interpretar correctamente el diámetro?
+5. ¿Qué pregunta estadística te parece más interesante?
+
+
+En los datos no hay registros faltantes. Para conocer a profundidad cada pieza será necesario observar los distintos factores que influyen en su producción, como la máquina de la que provienen, a qué hora del día se fabricaron y qué día fueron producidas. De este modo, se obtendrá la información para analizar cómo influyen las condiciones de la pieza en el diámetro resultante. Más adelante averiguaremos si hay una máquina defectuosa que produce piezas con un diámetro "incorrecto", por lo que será necesario investigar o definir cuál es el diámetro más deseable.
+
+---
+
+# 8. Exploración mínima
+
+Todavía no necesitamos veinte gráficas.
+
+Podemos empezar con una pregunta muy concreta:
+
+> ¿Cómo se distribuyen los diámetros?
+
+```{r}
+ggplot(dat, aes(x = DIAMETER)) +
+  geom_histogram(bins = 15) +
+  labs(
+    title = "Distribución de los diámetros",
+    x = "Diámetro",
+    y = "Frecuencia"
+  )
+```
+
+Ahora:
+
+```{r}
+ggplot(dat, aes(x = factor(MACHINE), y = DIAMETER)) +
+  geom_boxplot() +
+  labs(
+    title = "Diámetro por máquina",
+    x = "Máquina",
+    y = "Diámetro"
+  )
+```
+
+Observa que la segunda gráfica ya incorpora una **pregunta de comparación**.
+
+---
+
+# 9. Actividad integradora
+
+Sin copiar las conclusiones de las gráficas, redacta:
+
+> “A partir de una primera exploración de los datos de MACHINE, considero que…”
+
+Tu texto debe incluir:
+
+- una afirmación sobre el centro;
+- una afirmación sobre la variabilidad;
+- una comparación entre máquinas;
+- una pregunta que todavía quede abierta.
+
+No necesitas calcular todas las medidas todavía.
+
+A partir de una primera exploración de los datos de MACHINE, considero que la mayoría de los diámetros está alrededor de 0.1239, aunque se puede notar que otros diámetros también muestran una frecuencia importante, por lo que no se concentran realmente en la media o la mediana. Podemos observar que la máquina 1 y la máquina 2 tienen comportamientos similares respecto a los diámetros que producen, la máquina 2 tendiendo a medidas más pequeñas, mientras que la máquina 3 tiene una variación aparentemente problemática con las medidas que produce. Queda preguntarse ¿qué factores influyen en el comportamiento anómalo de la máquina 3?
+
+
+
+```{r}
+media <- mean(dat$DIAMETER)
+print(media)
+```
+
+---
+
+# 10. Autoevaluación
+
+<details>
+<summary>Mostrar criterios de revisión</summary>
+
+Deberías ser capaz de explicar:
+
+- qué es una observación;
+- qué es una variable;
+- por qué el tipo de almacenamiento en R no determina automáticamente la escala estadística;
+- diferencia entre población y muestra;
+- diferencia entre parámetro y estadística;
+- por qué revisar los datos antes de calcular medidas;
+- diferencia entre una pregunta descriptiva, comparativa y de asociación.
+
+</details>
+
+## Reto
+
+Explica con tus propias palabras por qué:
+
+> **“tener un conjunto de datos” no equivale todavía a “tener un problema estadístico bien planteado”.**
+

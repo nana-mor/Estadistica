@@ -1,0 +1,411 @@
+---
+title: "Tutorial 7: Comparar, relacionar y correlacionar variables"
+subtitle: "Estadística I — Matemáticas Aplicadas y Computación"
+author: "Dra. Elizabeth Martínez Gómez"
+output:
+  html_document: 
+    toc: true
+    code_folding: show
+    highlight: tango
+    theme: readable
+---
+
+# Propósito
+
+Cerramos el Tema 1 pasando de estudiar una variable a estudiar **relaciones entre variables**.
+
+Trabajaremos con datos reales del NIST sobre calibración de un sistema óptico y con las mediciones históricas de Michelson.
+
+El conjunto de calibración contiene 40 mediciones de 10 artefactos de ancho de línea; la primera columna es el ancho de referencia y la segunda el ancho medido. [NIST, CALIBRATIONLINE.DAT](https://www.itl.nist.gov/div898/handbook/datasets/CALIBRATIONLINE.DAT).
+
+```{r setup, message=FALSE, warning=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+library(ggplot2)
+
+setwd("/home/nani/Documents/Universidad/2027-I/Estadistica/Actividades/Tutoriales estadística")
+cal <- read.csv("Datos/Dana Amador - CALIBRATIONLINE.csv")
+attach(cal)
+names(cal)
+
+
+michelson <- read.csv("Datos/Dana Amador - MICHELSO.csv")
+attach(michelson)
+names(michelson)
+
+names(michelson)<- c("velocidad", "temperatura", "dia", "ampm")
+
+```
+
+---
+
+# 1. Comparación y asociación no son lo mismo
+
+### Comparación
+
+Pregunta:
+
+> ¿Cómo cambia una variable entre grupos?
+
+Ejemplo:
+
+> ¿Los diámetros difieren entre máquinas?
+
+### Asociación
+
+Pregunta:
+
+> ¿Cómo varía una variable cuando cambia otra?
+
+Ejemplo:
+
+> ¿Cómo se relaciona el ancho medido con el ancho de referencia?
+
+---
+
+# 2. La gráfica de dispersión
+
+```{r}
+ggplot(cal, aes(x = ancho_referencia, y = ancho_medido)) +
+  geom_point() +
+  labs(
+    title = "Calibración del sistema óptico",
+    x = "Ancho de referencia",
+    y = "Ancho medido"
+  )
+```
+
+Antes de calcular un número, observa.
+
+## Actividad 1
+
+Describe:
+
+1. dirección;
+2. intensidad aparente;
+3. linealidad;
+4. posibles puntos alejados;
+5. posible sesgo sistemático.
+
+---
+
+# 3. Covarianza
+
+La covarianza muestral es:
+
+\[
+s_{XY}
+=
+\frac{1}{n-1}
+\sum_{i=1}^{n}
+(x_i-\bar x)(y_i-\bar y).
+\]
+
+```{r}
+cov(cal$ancho_referencia, cal$ancho_medido)
+```
+
+El signo informa sobre la dirección conjunta:
+
+- positiva: valores grandes de \(X\) tienden a acompañarse de valores grandes de \(Y\);
+- negativa: valores grandes de \(X\) tienden a acompañarse de valores pequeños de \(Y\).
+
+Pero la magnitud depende de las unidades.
+
+---
+
+# 4. Correlación de Pearson
+
+\[
+r=
+\frac{s_{XY}}{s_Xs_Y}.
+\]
+
+```{r}
+cor(cal$ancho_referencia, cal$ancho_medido)
+```
+
+Como \(r\) es adimensional, permite interpretar la intensidad lineal en una escala común.
+
+---
+
+# 5. Interpretar \(r\) no significa memorizar intervalos
+
+Un valor cercano a 1 indica asociación lineal positiva fuerte.
+
+Un valor cercano a -1 indica asociación lineal negativa fuerte.
+
+Un valor cercano a 0 indica poca asociación **lineal**.
+
+Pero:
+
+\[
+r\approx0
+\]
+
+no significa necesariamente independencia ni ausencia de relación.
+
+---
+
+# 6. Actividad 2 — Correlación alta no significa medición perfecta
+
+Calcula:
+
+```{r}
+cor(cal$ancho_referencia, cal$ancho_medido)
+```
+
+Ahora calcula el error de medición:
+
+```{r}
+cal$error <- cal$ancho_medido - cal$ancho_referencia
+
+summary(cal$error)
+```
+
+Y grafícalo:
+
+```{r}
+ggplot(cal, aes(x = ancho_referencia, y = error)) +
+  geom_point() +
+  geom_hline(yintercept = 0, linetype = 2) +
+  labs(
+    x = "Referencia",
+    y = "Error = medida - referencia"
+  )
+```
+
+### Pregunta importante
+
+¿Una correlación alta garantiza que el instrumento sea insesgado?
+
+**No. La correlación mide asociación lineal, no necesariamente acuerdo entre dos métodos de medición distintos.**
+
+---
+
+# 7. Un ejemplo histórico diferente
+
+En el conjunto de Michelson tenemos temperatura y velocidad medida:
+
+```{r}
+ggplot(michelson, aes(x = temperatura, y = velocidad)) +
+  geom_point() +
+  labs(
+    x = "Temperatura (°F)",
+    y = "Velocidad de la luz"
+  )
+```
+
+Calcula:
+
+```{r}
+cor(michelson$temperatura, michelson$velocidad)
+```
+
+## Actividad 3
+
+Compara la gráfica con la correlación.
+
+¿El número cuenta toda la historia?
+
+¿Qué deberíamos revisar antes de interpretar el coeficiente?
+
+---
+
+# 8. Correlación y causalidad
+
+Supón que observamos una correlación entre \(X\) y \(Y\).
+
+No podemos concluir automáticamente:
+
+\[
+X\rightarrow Y.
+\]
+
+Puede existir:
+
+- una variable de confusión;
+- causalidad inversa;
+- asociación accidental;
+- estructura temporal;
+- selección de datos.
+
+## Actividad 4
+
+Escribe un ejemplo propio de dos variables correlacionadas donde ninguna cause necesariamente a la otra.
+
+Después explica qué variable adicional podría actuar como confusora.
+
+---
+
+# 9. Una correlación puede ocultar estructura
+
+Considera la identidad:
+
+\[
+Y=X^2
+\]
+
+con \(X\) distribuida aproximadamente de forma simétrica alrededor de cero.
+
+Puede existir una relación determinista muy fuerte entre \(X\) y \(Y\), pero la correlación lineal puede ser cercana a cero.
+
+Puedes comprobarlo:
+
+```{r}
+set.seed(10)
+
+x <- seq(-3, 3, length.out = 100)
+y <- x^2
+
+cor(x, y)
+
+plot(x, y)
+```
+
+## Actividad 5
+
+Explica:
+
+> ¿Cómo puede existir una relación matemática fuerte y, al mismo tiempo, una correlación de Pearson cercana a cero?
+
+Esto es fundamental:
+
+> **Pearson mide asociación lineal.**
+
+---
+
+# 10. Comparación final: tres preguntas distintas
+
+Ante un conjunto de datos debes decidir qué problema tienes:
+
+### Problema A — Descripción
+
+> ¿Cómo se distribuye \(X\)?
+
+Usamos:
+
+- histogramas;
+- boxplots;
+- media;
+- mediana;
+- cuantiles;
+- dispersión.
+
+### Problema B — Comparación
+
+> ¿Cómo cambia \(X\) entre grupos?
+
+Usamos:
+
+- tablas;
+- boxplots;
+- medidas por grupo.
+
+### Problema C — Asociación
+
+> ¿Cómo se relacionan \(X\) y \(Y\)?
+
+Usamos:
+
+- dispersión;
+- covarianza;
+- correlación;
+- análisis de la forma de la relación.
+
+---
+
+# Actividad integradora del Tema 1
+
+Escoge **uno** de los conjuntos de datos trabajados en los siete tutoriales. Si no fueron de tu agrado, puedes elegir otro.
+
+Construye un mini análisis estadístico de una página que contenga:
+
+## 1. Problema
+
+Formula una pregunta estadística clara.
+
+## 2. Datos
+
+Indica:
+
+- fuente;
+- unidad estadística;
+- variables;
+- población de interés;
+- muestra disponible.
+
+## 3. Exploración
+
+Incluye al menos:
+
+- una tabla;
+- una gráfica univariada;
+- una gráfica comparativa o bivariada, según corresponda.
+
+## 4. Resumen numérico
+
+Incluye medidas apropiadas de:
+
+- centro;
+- posición;
+- dispersión;
+- forma.
+
+## 5. Interpretación
+
+Responde la pregunta inicial.
+
+## 6. Limitaciones
+
+Indica qué conclusión **no** puede obtenerse a partir de los datos.
+
+---
+
+# Reto final
+
+Explica con tus propias palabras la siguiente cadena:
+
+\[
+\boxed{
+\text{pregunta}
+\rightarrow
+\text{datos}
+\rightarrow
+\text{estructura}
+\rightarrow
+\text{gráficas}
+\rightarrow
+\text{medidas}
+\rightarrow
+\text{interpretación}
+}
+\]
+
+Tu explicación debe mostrar que entiendes que **una estadística no tiene significado fuera del problema estadístico que la originó**.
+
+---
+
+# Autoevaluación
+
+<details>
+<summary>Checklist final</summary>
+
+Al terminar el Tema 1 deberías poder:
+
+- identificar población y muestra;
+- distinguir variable y observación;
+- clasificar variables;
+- reconocer escalas de medición;
+- construir e interpretar tablas;
+- elegir gráficas adecuadas;
+- interpretar media, mediana y cuantiles;
+- interpretar rango, IQR, varianza y desviación estándar;
+- describir forma, asimetría y curtosis;
+- comparar distribuciones;
+- distinguir comparación de asociación;
+- calcular e interpretar covarianza;
+- calcular e interpretar correlación de Pearson;
+- explicar por qué correlación no implica causalidad;
+- reconocer que Pearson mide asociación lineal.
+
+</details>

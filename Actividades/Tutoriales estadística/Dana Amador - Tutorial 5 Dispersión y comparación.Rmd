@@ -1,0 +1,299 @@
+---
+title: "Tutorial 5: Dispersión y comparación de distribuciones"
+subtitle: "Estadística I — Matemáticas Aplicadas y Computación"
+author: "Dra. Elizabeth Martínez Gómez"
+output:
+  html_document: 
+    toc: true
+    code_folding: show
+    highlight: tango
+    theme: readable
+---
+
+# Propósito
+
+Dos conjuntos pueden tener medias similares y comportamientos muy distintos.
+
+Aquí estudiaremos:
+
+- rango;
+- rango intercuartílico;
+- varianza;
+- desviación estándar;
+- coeficiente de variación;
+- comparación entre grupos.
+
+Trabajaremos con las mediciones reales de diámetro de tres máquinas del NIST. El conjunto contiene 180 observaciones. [NIST, MACHINE.DAT](https://www.itl.nist.gov/div898/handbook/datasets/MACHINE.DAT).
+
+```{r setup, message=FALSE, warning=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+
+library(ggplot2)
+
+setwd("/home/nani/Documents/Universidad/2027-I/Estadistica/Actividades/Tutoriales estadística")
+machine <- read.csv("Datos/Dana Amador - MACHINE.csv")
+attach(machine)
+
+names(machine)
+str(machine)
+
+```
+
+La variable categórica MACHINE debe ser factor y no entera. Por eso la convertimos:
+
+```{r}
+machine$MACHINE <- factor(machine$MACHINE)
+
+str(machine)
+
+```
+
+---
+
+# 1. Rango
+
+\[
+R=x_{\max}-x_{\min}.
+\]
+
+```{r}
+range(machine$DIAMETER)
+diff(range(machine$DIAMETER))
+```
+
+## Actividad 1
+
+¿Por qué el rango utiliza sólo dos observaciones?
+
+¿Qué problema puede producir esto cuando hay un valor extremo?
+
+---
+
+# 2. Rango intercuartílico
+
+\[
+IQR=Q_3-Q_1.
+\]
+
+```{r}
+quantile(machine$DIAMETER, c(.25, .75))
+IQR(machine$DIAMETER)
+```
+
+El IQR describe la amplitud del 50% central de las observaciones.
+
+---
+
+# 3. Varianza
+
+Para una muestra:
+
+\[
+s^2=\frac{1}{n-1}
+\sum_{i=1}^n(x_i-\bar{x})^2.
+\]
+
+```{r}
+var(machine$DIAMETER)
+```
+
+## Actividad 2 — Cálculo manual
+
+Para:
+
+```{r}
+z <- c(2, 4, 5, 7)
+```
+
+calcula manualmente:
+
+1. media;
+2. desviaciones respecto a la media;
+3. cuadrados;
+4. suma de cuadrados;
+5. varianza muestral.
+
+Comprueba:
+
+```{r}
+mean(z)
+var(z)
+```
+
+---
+
+# 4. Desviación estándar
+
+\[
+s=\sqrt{s^2}.
+\]
+
+```{r}
+sd(machine$DIAMETER)
+```
+
+La desviación estándar vuelve a las unidades originales.
+
+Esto es importante:
+
+- varianza: unidades al cuadrado;
+- desviación estándar: mismas unidades que la variable.
+
+---
+
+# 5. Comparar las máquinas
+
+```{r}
+aggregate(
+  DIAMETER ~ MACHINE,
+  data = machine,
+  FUN = function(x) c(
+    media = mean(x),
+    mediana = median(x),
+    sd = sd(x),
+    IQR = IQR(x)
+  )
+)
+```
+
+Una representación más clara:
+
+```{r}
+ggplot(machine, aes(x = MACHINE, y = DIAMETER)) +
+  geom_boxplot() +
+  labs(
+    title = "Diámetro por máquina",
+    x = "Máquina",
+    y = "Diámetro"
+  )
+```
+
+---
+
+# 6. La dispersión no es sólo “qué tan grande es la desviación estándar”
+
+Una comparación estadística debe considerar:
+
+- centro;
+- escala;
+- forma;
+- valores extremos;
+- contexto de medición.
+
+## Actividad 3
+
+Construye un pequeño reporte:
+
+| Máquina | Media | Mediana | SD | IQR |
+|---|---:|---:|---:|---:|
+| 1 | | | | |
+| 2 | | | | |
+| 3 | | | | |
+
+Después responde:
+
+1. ¿Qué máquina tiene mayor variabilidad según SD?
+2. ¿Coincide con el IQR?
+3. ¿Qué medida prefieres para una comparación robusta?
+4. ¿Existe evidencia visual de valores atípicos?
+
+---
+
+# 7. Coeficiente de variación
+
+Cuando tiene sentido trabajar con una variable positiva y una escala de razón:
+
+\[
+CV=\frac{s}{\bar{x}}.
+\]
+
+Como porcentaje:
+
+\[
+CV(\%)=100\frac{s}{\bar{x}}.
+\]
+
+```{r}
+cv <- function(x) sd(x) / mean(x)
+
+tapply(machine$DIAMETER, machine$MACHINE, cv) * 100
+```
+
+## Actividad 4
+
+¿Por qué dividir por la media puede ser útil al comparar variabilidad relativa?
+
+¿En qué situaciones NO sería razonable utilizar CV?
+
+---
+
+# 8. Comparación conceptual
+
+Considera dos conjuntos hipotéticos:
+
+\[
+A=\{99,100,101\}
+\]
+
+\[
+B=\{50,100,150\}.
+\]
+
+Ambos tienen media 100.
+
+Calcula:
+
+```{r}
+A <- c(99,100,101)
+B <- c(50,100,150)
+
+c(mean(A), sd(A), IQR(A))
+c(mean(B), sd(B), IQR(B))
+```
+
+## Actividad 5
+
+Explica por qué:
+
+> “Las medias son iguales”
+
+no implica
+
+> “los conjuntos se comportan igual”.
+
+---
+
+# 9. Reto
+
+Para cada máquina construye:
+
+1. histograma;
+2. boxplot;
+3. tabla de media, mediana, SD e IQR.
+
+Después escribe una conclusión de máximo 10 líneas.
+
+Tu conclusión debe diferenciar claramente:
+
+- centro;
+- dispersión;
+- forma;
+- posibles valores extremos.
+
+---
+
+# Autoevaluación
+
+<details>
+<summary>Checklist</summary>
+
+Debes poder:
+
+- distinguir rango e IQR;
+- explicar el divisor \(n-1\) de la varianza muestral;
+- relacionar varianza y desviación estándar;
+- comparar distribuciones;
+- explicar el concepto de variabilidad relativa;
+- reconocer que dos muestras pueden tener igual media y distinta dispersión.
+
+</details>

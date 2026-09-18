@@ -1,0 +1,660 @@
+---
+title: "Tutoriales de Estadística"
+author: "Dana Amador"
+date: "2026-09-18"
+output:
+  pdf_document:
+    toc: true
+  html_document:
+    toc: true
+    toc_float: true
+    theme: readable
+---
+
+```{r}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+if (!requireNamespace("ggplot2", quietly = TRUE)) {
+  stop("Instala ggplot2 con install.packages('ggplot2') antes de continuar.")
+}
+library(ggplot2)
+
+setwd("/home/nani/Documents/Universidad/2027-I/Estadistica/Actividades/Tutoriales estadística")
+michelson <- read.csv("Datos/Dana Amador - MICHELSO.csv")
+attach(michelson)
+names(michelson)<- c("velocidad", "temperatura", "dia", "ampm", "conjunto")
+
+data <- read.csv("Datos/Dana Amador - MACHINE.csv")
+attach(data)
+
+cal <- read.csv("Datos/Dana Amador - CALIBRATIONLINE.csv")
+names(cal)[1:2] <- c("ancho_referencia", "ancho_medido")
+
+fatiga <- read.csv("Datos/Dana Amador - BIRNSAUN.csv")
+attach(fatiga)
+```
+
+# Tutorial 1: De observaciones a datos estadísticos
+
+
+## Actividad 1 - Identifica la unidad estadística
+
+Sin ejecutar R todavía, responde:
+
+1. ¿Qué representa una fila del conjunto de Michelson?
+2. ¿Qué representa una variable?
+3. ¿Cuál sería una pregunta descriptiva razonable?
+4. ¿Qué pregunta NO puede responderse sólo con estos datos?
+
+### Solución
+
+1. Una medición de la velocidad de la luz, así como el estado de varias otras condiciones en cuanto al estado de la tierra que era relevante medir para el experimento.
+2. Un aspecto del estado de la tierra al momento de hacer las mediciones, un factor que los científicos consideraban relevante o que podría modificar la velocidad de la luz.
+3. ¿La temperatura de la tierra afecta la velocidad de la luz?
+4. ¿La fuerza de gravedad afecta la velocidad de la luz?
+
+## Actividad 2 - Intervalo estadístico
+
+Completa esta tabla en tu cuaderno:
+
+| Variable | ¿Qué representa? | Tipo estadístico | Unidad/escala |
+|---|---|---|---|
+| velocidad | | | |
+| temperatura_F | | | |
+| dia | | | |
+| ampm | | | |
+| conjunto | | | |
+
+**Importante:** distingue entre el tipo de dato almacenado por R y el tipo de variable desde el punto de vista estadístico.
+
+### Solución
+
+| Variable | ¿Qué representa? | Tipo estadístico | Unidad/escala |
+|---|---|---|---|
+| velocidad |La velocidad de la luz |Cuantitativa continua |millones de m/s |
+| temperatura_F | Temperatura del aire| Cuantitativa continua | Farenheit|
+| dia | Días transcurridos desde el 5 de junio de 1879 | Cuantitativa discreta |Días |
+| ampm |Si era de mañana o tarde al momento de la medición | Cualitativa Nominal |1 = AM, 2 = PM |
+| conjunto | A qué conjunto pertenece | Cualitativa Ordinal | Del 1 al 24|
+
+
+## Actividad 3 - La regunta cambia cuando cambia el diseño
+
+Ahora tenemos:
+
+- `MACHINE`: máquina;
+- `DAY`: día;
+- `TIME`: mañana/tarde;
+- `SAMPLE`: número de muestra;
+- `DIAMETER`: diámetro medido.
+
+Formula **tres preguntas estadísticas distintas**:
+
+1. una pregunta sobre una sola variable;
+2. una pregunta para comparar grupos;
+3. una pregunta sobre asociación entre dos variables.
+
+No las respondas todavía. Sólo formula correctamente las preguntas.
+
+### Solución
+
+1. ¿Cuál es el diámetro máximo observado?
+2. ¿A qué hora del día se encuentra el promedio menor de diámetro?
+3. ¿A qué máquina le corresponde el diámetro máximo observado?
+
+## Actividad 4 - Auditoría inicial
+
+Escribe un pequeño informe de 5–8 líneas respondiendo:
+
+1. ¿Hay datos faltantes?
+2. ¿Qué variables son factores del proceso?
+3. ¿Cuál es la respuesta medida?
+4. ¿Qué información necesitarías conocer para interpretar correctamente el diámetro?
+5. ¿Qué pregunta estadística te parece más interesante?
+
+### Solución
+
+En los datos no hay registros faltantes. Para conocer a profundidad cada pieza será necesario observar los distintos factores que influyen en su producción, como la máquina de la que provienen, a qué hora del día se fabricaron y qué día fueron producidas. De este modo, se obtendrá la información para analizar cómo influyen las condiciones de la pieza en el diámetro resultante. Más adelante averiguaremos si hay una máquina defectuosa que produce piezas con un diámetro “incorrecto”, por lo que será necesario investigar o definir cuál es el diámetro más deseable.
+
+
+## Actividad integradora
+
+Sin copiar las conclusiones de las gráficas, redacta:
+
+> “A partir de una primera exploración de los datos de MACHINE, considero que…”
+
+Tu texto debe incluir:
+
+- una afirmación sobre el centro;
+- una afirmación sobre la variabilidad;
+- una comparación entre máquinas;
+- una pregunta que todavía quede abierta.
+
+No necesitas calcular todas las medidas todavía.
+
+### Solución
+
+A partir de una primera exploración de los datos de MACHINE, considero que la mayoría de los diámetros está alrededor de 0.1239, aunque se puede notar que otros diámetros también muestran una frecuencia importante, por lo que no se concentran realmente en la media o la mediana. Podemos observar que la máquina 1 y la máquina 2 tienen comportamientos similares respecto a los diámetros que producen, la máquina 2 tendiendo a medidas más pequeñas, mientras que la máquina 3 tiene una variación aparentemente problemática con las medidas que produce. Queda preguntarse ¿qué factores influyen en el comportamiento anómalo de la máquina 3?
+
+## Reto
+
+Explica con tus propias palabras por qué:
+
+> **“tener un conjunto de datos” no equivale todavía a “tener un problema estadístico bien planteado”.**
+
+### Solución
+
+Porque es necesario ver cómo se comportan esos datos, con qué se cuenta para trabajar y qué puede ser interpretado con los datos que se tiene. 
+
+# Tutorial 2 Variables y escalas de medición
+
+## Actividad 1 -  Clasificación
+
+Clasifica cada variable en términos estadísticos.
+
+| Variable | Cualitativa/Cuantitativa | Discreta/Continua | Escala |
+|---|---|---|---|
+| MACHINE | | | |
+| DAY | | | |
+| TIME | | | |
+| SAMPLE | | | |
+| DIAMETER | | | |
+
+**No continúes hasta justificar cada decisión.**
+
+### Solución
+
+| Variable | Cualitativa/Cuantitativa | Discreta/Continua | Escala |
+|---|---|---|---|
+| MACHINE |cualitativa | nominal |1, 2, 3 máquinas |
+| DAY | cualitativa | ordinal |1, 2, 3, ... días |
+| TIME | cualitativa| nominal/dicotómica |1 = AM, 2 = PM |
+| SAMPLE | cualitativa | nominal |1, 2, 3 ... 10 |
+| DIAMETER | cuantitativa | continua |pulgadas |
+
+Machine: Clasifica las 3 máquinas. Aunque se trate de números, estos funcionan como simples etiquetas y no es posible realizar operaciones con ellos.
+
+Day: Aunque por lo general las fechas se tratan como una variable cuantitativa, para este caso no es necesario realizar operaciones con el tiempo. En cambio, sólo se necesita hacer una diferenciación entre qué día fue hecha cada medición, sin un orden de importancia particular pero sí con una secuencia temporal.
+
+Time: Sólo puede adquirir 2 valores numéricos que corresponden a AM y PM, que son valores de tipo cualitativo sin prioridad o secuencia.
+
+Sample: Es la muestra que está enumerada del 1 al 10 para cada combinación de máquina, día y tiempo, con una secuencia pero sin un orden de importancia. 
+
+Diameter: Las mediciones son de tipo cuantitativo, pues se pueden hacer operaciones con ellas, y se considerarn continuas por la naturaleza de los valores que puede tomar dentro de los decimales.
+
+## Actividad 2 - ¿Qué operaciones tienen sentido?
+
+Considera `ancho_referencia` y `ancho_medido`.
+
+Responde:
+
+1. ¿Son cuantitativas?
+2. ¿Son continuas?
+3. ¿Cuál es su escala?
+4. ¿Tiene sentido calcular una diferencia?
+5. ¿Tiene sentido calcular un cociente?
+6. ¿Qué significaría que el cociente fuera cercano a 1?
+
+Ahora calcula:
+
+```{r}
+cal$sesgo <- cal$ancho_medido - cal$ancho_referencia
+head(cal)
+```
+
+La diferencia tiene una interpretación directa como **error de medición con signo**.
+
+### Solución
+
+1. Sí
+2. Sí
+3. Pulgadas
+4. Sí, y representaría la diferencia con la medición.
+5. Sí, y representaría en qué proporción cambia de medida una con otra.
+6.  Que hubo poco error en la medición.
+
+## Actividad 3 - Diseña la gráfica adecuada
+
+Para cada situación elige una representación y justifica:
+
+1. número de máquina;
+2. diámetro;
+3. diámetro por máquina;
+4. relación entre ancho de referencia y ancho medido.
+
+Opciones:
+
+- barras;
+- histograma;
+- caja y bigotes;
+- dispersión.
+
+### Solución
+
+1. La mejor opción es la gráfica de barras, pues esta sirve para representar variables cualitativas.
+
+2. La mejor opción es el histograma, pues este es mejor para representar la frecuencia de variables cuantitativas.
+
+3. La mejor opción es el diagrama de caja y bigoes, pues este permite resumir y comparar la distribución de un conjunto de datos.
+
+4. La mejor opción es el de dispersión. Primero, porque las demás opciones representan frecuencia, mientras que la dispersión grafica puntos que representan la relación entre dos variables.
+
+## Actividad final
+
+Construye una tabla con:
+
+- variable;
+- unidad;
+- escala;
+- tipo;
+- operación estadística que consideras válida;
+- gráfica apropiada.
+
+Después responde:
+
+> **¿Por qué conocer la escala de medición antes de analizar los datos evita errores conceptuales?**
+
+### Solución
+
+| Variable | Unidad | Escala | Tipo | Operación Estadística | Gráfica apropiada |
+|---|---|---|---|---|---|
+| MACHINE | 1, 2, 3 | Máquina | Cualitativa nominal | X | Barras, Caja y Bigotes |
+| DAY | 1,2,3,4... | Días | Cualitativa ordinal | X | Barras |
+| TIME | 1, 2 | AM, PM| Cualitativa nominal| X  | Caja y bigotes |
+| SAMPLE | 1, 2, ..., 10 | Muestras | Cualitativa ordinal | X | Dispersión (Con var. diámetro) |
+| DIAMETER | Decimal | Pulgadas | Cuantitativa continua | Media, Varianza, Cuantiles | Histograma, Dispersión |
+| ANCHO_MEDIDO | Decimal | Pulgadas | Cuantitativa continua | Media, Varianza, Cuantiles | Histograma, dispersión |
+| ANCHO_REFERENCIA | Decimal | Pulgadas | Cuantitativa continua | Media, Varianza, Cuantiles | Histograma, dispersión |
+
+Es importante conocer la escala porque permite hacer precisiones con los datos que de otra forma pasarían desapercibidas. Además, no analizar el significado del dominio de cada variable puede provocar realizar operaciones u obtener resultados inútiles, o realizar operaciones estadísticas con una ponderación incorrecta.
+
+## Reto
+
+Encuentra un ejemplo en matemáticas aplicadas donde una variable parezca numérica, pero tratarla como una variable cuantitativa produzca una interpretación incorrecta.
+
+### Solución
+
+# Tutorial 3: Tablas y gráficas
+
+## Actividad 1 - Antes de graficar
+
+Responde primero sin producir ninguna gráfica:
+
+1. ¿Cuál es la unidad estadística?
+2. ¿Cuál es la variable respuesta principal?
+3. ¿Qué variables podrían considerarse explicativas o de contexto?
+4. ¿Cuáles son cuantitativas y cuáles funcionan como variables categóricas aunque estén almacenadas como números?
+5. Formula una pregunta descriptiva y una pregunta de comparación que puedan responderse con estos datos.
+
+**Producto:** escribe tus respuestas en 5–8 líneas.
+
+### Solución
+
+Para este ejercicio la unidad estadística es cada medición realizada por el aparato de micheslson, así como el registro de datos de la tierra que parecían relevantes para el experimento. Cada uno de estos datos se convierten en variables, donde la variable respuesta principal es la velocidad de la luz y el resto de ellas pueden considerarse variables explicativas, como la temperatura, el día (que representa la posición respecto al sol a través de la traslación), ampm (que representa en qué periodo del día se realizó la medición) y el conjunto. De todas estas la velocidad y la temperatura son cuantitativas, mientras que lado, día, ampm y conjunto son cualitativas aunque están almacenadas como números. De aquí se pueden desprender 2 preguntas: ¿Cuál es la velocidad mínima registrada? ¿Se tienen más registros de la mañana o de la tarde?
+
+## Actividad 2 - Frecuencia y proporción
+
+Calcula e interpreta la proporción de observaciones realizadas por la mañana y por la tarde.
+
+Después responde:
+
+> ¿Sería correcto calcular la media de `ampm`? ¿Por qué?
+
+### Solución
+
+```{r}
+michelson$periodo <- factor(
+  michelson$ampm,
+  levels = c(1, 2),
+  labels = c("AM", "PM")
+)
+
+table(michelson$periodo)
+```
+
+En el estricto sentido será posible, igual que es posible sacar la media del resultado de lanzar una moneda, pero la interpretación de ese resultado no sería razonable dado que no se trata de una variable numérica y un resultado decimal (1.63, para ser exactos) no tiene sentido en el dominio de la variable. 
+
+## Actividad 3 - ¿Qué significa agrupar?
+
+Explica qué información se pierde al sustituir valores exactos como 71, 72, 73 y 74 por un mismo intervalo.
+
+Después construye una tabla que incluya:
+
+- intervalo,
+- frecuencia absoluta,
+- frecuencia relativa,
+- frecuencia acumulada.
+
+### Solución
+
+Se pierde información de cómo se distribuye realmente la temperatura dentro de cada intervalo. Además, hace más difícil ver los datos atípicos, pues se combinan con datos normales o razonables. 
+
+|Intervalo | Frecuencia absoluta | Frecuencia relativa | Frecuencia absoluta acumulada | Frecuencia relativa acumulada |
+|:---:|:---:|:---:|:---:|:---:|
+| [50,60) | 3 | 0.03 | 3 |0.03 |
+| [60,70) | 17 | 0.17 | 20 |0.20|
+| [70,80) | 43 | 0.43 | 63 |0.63|
+| [80,90) | 32 | 0.32 | 95 |0.95|
+| [90,100) | 5 | 0.05  | 100 |1|
+
+## Actividad 4 - El ancho de la calse importa
+
+Compara las tres representaciones.
+
+1. ¿Cuál muestra mejor la estructura global?
+2. ¿Cuál introduce más variación visual artificial?
+3. ¿Qué ocurre cuando el número de clases es demasiado grande?
+4. ¿Qué ocurre cuando es demasiado pequeño?
+
+### Solución
+
+1. La que tiene los intervalos más pequeños, pues se acerca más a las frecuencias puntuales.
+
+2. La que tiene los intervalos más grandes, pues omite información al agrupar tantos valores.
+
+3. Se aproxima a reflejar mejor el comportamiento continuo de una variable y se representa mejor cada frecuencia.
+
+4. Se pierde información relevante sobre la frecuencia.
+
+## Actividad 5 - Elegir la gráfica
+
+Para cada variable decide si usarías barras, histograma o ninguna de las dos como primera opción:
+
+| Variable | Representación | Justificación |
+|---|---|---|
+| velocidad | | |
+| temperatura | | |
+| periodo | | |
+| dia | | |
+| conjunto | | |
+
+### Solución
+
+| Variable | Representación | Justificación |
+|:---|:---|:---|
+| velocidad | Histograma | Es una variable cuantitativa continua |
+| temperatura | Histograma | Es una variable cuantitativa |
+| periodo | Barras | Es una variable cualitativa |
+| dia | Ninguna | No es relevante medir la frecuencia de esta variable, pues los días de las mediciones son controladas |
+| conjunto | Ninguna | No es relevante medir la frecuencia de esta variable |
+
+## Actividad 6 - Comparación visual
+
+Sin calcular todavía media ni desviación estándar:
+
+1. Compara las medianas.
+2. Compara el IQR visualmente.
+3. Busca posibles observaciones atípicas.
+4. ¿Dirías que existe una diferencia importante entre AM y PM? Justifica solo con la gráfica.
+
+### Solución
+
+1. La mediana de la tarde es mayor que la mediana de la mañana.
+
+2. El IQR de la tarde es mayor que el IQR de la mañana.
+
+3. Las que se muestran se encuentran en la mañana, muy alejadas de los valores comunes de las mediciones, llegando a 300.0 y a 299.6.
+
+4. Basándonos en lo que se observa en la gráfica, teniendo en cienta que estas mediciones están en millones de metros por segundo, sí existe una diferencia importante. 
+
+## Actividad 7 - Leer un diagrama de dispersión
+
+Responde:
+
+1. ¿La nube de puntos parece lineal?
+2. ¿La relación, si existe, parece positiva o negativa?
+3. ¿Observas grupos o patrones diferentes?
+4. ¿Ves alguna observación potencialmente influyente?
+5. ¿Qué información se perdería si solo calcularas las medias de velocidad y temperatura?
+
+### Solución
+
+1. Sí.
+
+2. Ligeramente positiva.
+
+3. Sí, antes de 70 grados y después.
+
+4. Las mediciones más altas se encuentran después de los 70 grados.
+
+5. La forma en la que se distribuyen las mediciones respecto a ambas variables, así como los máximos y mínimos y en qué circunstancias ocurren esas mediciones. También sería difícil distinguir los datos atípicos.
+
+
+## Reto: Una misma variable, distintas preguntas
+
+Considera la variable `velocidad`.
+
+Propón tres preguntas diferentes que puedan formularse sobre ella:
+
+- una pregunta puramente descriptiva;
+- una pregunta de comparación;
+- una pregunta de asociación.
+
+Para cada pregunta indica qué representación gráfica usarías primero y por qué.
+
+### Solución
+
+- **¿Cuál es el comportamiento general de la variable?** -> Se puede resolver con un histograma, porque refleja en dónde se concentran las mediciones y cuáles son las más frecuentes, al menos dentro de los rangos establecidos.
+
+- **¿Cuál es el comportamiento de la velocidad en cada día de la medición?** -> Se puede contestar con un diagrama de caja y bigotes, porque se puede asociar una caja a cada día y el diagrama mostrará el mínimo, el máximo y los cuartiles de las mediciones. 
+
+- **¿La velocidad cambia conforme los días avanzan?** -> Se puede responder con un diagrama de dispersión porque permite visualizar la relación entre ambas variables.
+
+
+## Actividad 8 - Producto final
+
+Entrega una página breve que contenga:
+
+1. una tabla de frecuencias para `periodo`;
+2. un histograma de `velocidad`;
+3. un boxplot de `velocidad` por `periodo`;
+4. un diagrama de dispersión de `temperatura` contra `velocidad`;
+5. una interpretación escrita de cada gráfica.
+
+La interpretación debe responder **qué observas**, **qué no puedes concluir todavía** y **qué pregunta estadística justificaría el siguiente análisis**.
+
+### Solución
+
+#### Tabla de frecuencias para periodo
+```{r}
+frec_periodos <- table(michelson$periodo)
+print(frec_periodos)
+```
+
+Podemos ver que se realizaron más mediciones durante la tarde. Todavía no podemos conlcuir si la hora influye en las mediciones de la velocidad de la luz.
+
+#### Histograma de velocidad
+
+```{r}
+ggplot(michelson, aes(x = velocidad))+
+  geom_histogram(binwidth = 0.01, boundary = 299.6)+
+  labs(
+  title = " Distribución de la velocidad de la luz",
+  x = "Velocidad (millones de m/s)",
+  y = "Frecuencia"
+)
+```
+
+Gracias a la gráfica se puede observar que las mediciones están entre 299.8 y 299.9. Además, tenemos datos cerca de 299.6 y de 300.1, sin embargo el hecho de que se encuentren tan alejados de el resto de datos y con una frecuencia tan baja puede indicar que se trata de datos atípicos. Tan sólo con esta gráfica no se puede concluir todavía cuál es el valor real de la velocidad de la luz, que es el propósito del experimento. 
+
+
+#### Boxplot de velocidad por periodo
+
+```{r}
+ggplot(michelson, aes(x = periodo, y = velocidad)) + 
+  geom_boxplot() + 
+  labs(
+    title = "Velocidad de la luz por periodo",
+    x = "Periodo",
+    y = "Velocidad (millones de m/s)"
+  )
+```
+
+A simple vista pareciera que las velocidad aumenta cuando las mediciones se hacen por la tarde. Esta gráfica confirma la teoría del apartado anterior acerca de los datoas atípicos que se encontraban muy alejados del resto de observaciones. Se puede ver que las mediciones de la mañana tienen una dispersión menor, mientras que las de la tarde se encuantran distribuidas entre un rango más amplio de valores. A pesar de esto, gracias a la representación de la mediana y los cuartiles, podemos ver en este gráfico también que la mayoría de las observaciones se concentran entre 299.8 y 299.9.
+
+#### Diagrama de dispersión de temperatura contra velocidad
+
+```{r}
+ggplot(michelson, aes(x = temperatura, y= velocidad)) +
+  geom_point() + 
+  labs(
+    title = "Temperatura del aire y velocidad de la luz",
+    x = "Temperatura (Farenheit)",
+    y = "Velocidad (millones de m/s)"
+)
+```
+
+Lo que la gráfica parece indicar es que cuando la temperatura está entre 60 y 70 grados, la velocidad se concentra en valores entre 299.75 y 299.9. A partir de 70 grados se empiezan a dispersar las mediciones pero parecen concentrarse nuevamente en temperaturas mayores a 85 grados, el rango se reduce a valores entre 299.85 y 300.0. Aunque pareciera indicar una tendencia, todavía no podemos concluir que la temperatura afecta la velocidad, pues también es necesario considerar las demás variables. 
+
+# Tutorial 4: Centro y posición
+
+## Actividad 1
+
+Sin mirar todavía los números:
+
+1. ¿Cuál esperas que sea mayor?
+2. ¿Por qué?
+3. ¿Qué característica de la distribución puede producir esa diferencia?
+
+Después verifica.
+
+### Solución
+
+1. No puedo esperar que alguna sea mayor porque no tengo conocimiento real sobre el comportamiento de los datos. Sin embargo, la intuición me dice que deberían ser muy cercanas respecto al resto de los datos.
+2. Porque ambas dan información sobre lo que está "en medio" de los datos, una de forma vertical y otra de forma horizontal.
+3. que haya datos con separaciones o con frecuencias muy distintas o "alejadas". 
+
+```{r}
+c(
+  media = mean(fatiga$vida),
+  mediana = median(fatiga$vida)
+)
+```
+
+## Actividad 2
+
+Explica algebraicamente por qué la media cambia más.
+
+No basta decir “la media es sensible a valores extremos”.
+
+Escribe qué ocurre con:
+
+\[
+\bar x=\frac{1}{n}\sum x_i
+\]
+
+cuando aparece una nueva observación \(M\).
+
+### Solución
+
+Tenemos que 
+
+$$
+\begin{align*}
+\bar{x} &= \frac{1}{n} \sum x_i \\
+&=  \sum_{i=1}^{n} x_i\left(\frac{1}{n}\right) \quad \text{Por prop. de la suma}\\
+&=  \sum_{i=1}^{n} x_if(x_i) \quad \text{Pues es una v.a. uniforme}\\
+\end{align*}
+$$
+
+Pero una observación más cambia la cantidad de observaciones y, por lo tanto, la probabilidad, de $n$ hasta $n+1$, entonces:
+
+$$
+\begin{align*}
+\bar{x} &=  \sum_{i=1}^{n+1} x_if(x_i) \quad \text{Pues son n+1 observaciones}\\
+&=  \sum_{i=1}^{n+1} x_i \left( \frac{1}{n+1}\right) \quad \text{Pues es una v.a. uniforme}\\
+&=  \left( \frac{1}{n+1}\right)\sum_{i=1}^{n+1} x_i  \quad \text{Por prop. de la suma}\\
+&=   \frac{1}{n+1}\left(\sum_{i=1}^{n} x_i +x_{n+1}\right) \quad \text{Por prop. de la suma}\\
+&=   \frac{1}{n+1}\left(\sum_{i=1}^{n} x_i +M\right) \quad \text{}\\
+\end{align*}
+$$
+Es decir, la nueva observación tiene un impacto ponderado en el valor de $\bar x$, por lo que puede aumentar mucho su valor; por otro lado, sin importar el valor de la nueva observación, sólo recorrerá la mediana, a lo más, una observación a la derecha o a la izquierda.
+
+
+## Actividad 3 - Interpretación
+
+Calcula:
+
+```{r}
+q <- quantile(fatiga$vida, c(.25, .5, .75))
+q
+```
+
+Redacta:
+
+- interpretación del primer cuartil;
+- interpretación de la mediana;
+- interpretación del tercer cuartil.
+
+Después responde:
+
+> ¿Qué porcentaje de las observaciones queda entre \(Q_1\) y \(Q_3\)?
+
+### Solución
+
+- El 25% de las observaciones es menor o igual a 1115. El 75% de las observaciones es mayor a 1115.
+- El 50% de las observaciones es menor o igual a 1416. El 50% de las observaciones es mayor a 1416
+- El 75% de las observaciones es menor o igual a 1642. El 25% de las observaciones es mayor a 1642
+
+Entre el $Q_1$ y el $Q_3$ quedan el 50% de las observaciones.
+
+## Actividad 4
+
+¿Te parece una buena medida de centro para la velocidad de la luz?
+
+Justifica tu respuesta estadísticamente.
+
+### Solución
+
+```{r}
+moda <- function(x) {
+  ux <- unique(x)
+  ux[which.max(tabulate(match(x,ux)))]
+}
+print(moda(michelson$velocidad))
+print(mean(michelson$velocidad))
+print(median(michelson$velocidad))
+```
+
+Tentativamente sí, pues se están realizando mediciones de un fenómeno físico con el fin de verificar si se trata de una constante o no, por lo que la medida que más se repite es la que más podría interesar en el contexto del experimento. 
+
+## Actividad integradora
+
+Elige uno de los dos conjuntos y escribe un párrafo que incluya:
+
+1. media;
+2. mediana;
+3. dos cuantiles;
+4. interpretación;
+5. comentario sobre posible asimetría.
+
+### Solución
+
+
+
+## Reto matemático
+
+Demuestra que si se añade una observación \(M\) a una muestra de tamaño \(n\),
+
+\[
+\bar x_{\text{nuevo}}
+=
+\frac{n\bar x+M}{n+1}.
+\]
+
+¿Qué sucede con la media cuando \(M\to\infty\)?
+
+### Solución
+
+
+
+
+
+
+
+
+
+
+
+
+
+

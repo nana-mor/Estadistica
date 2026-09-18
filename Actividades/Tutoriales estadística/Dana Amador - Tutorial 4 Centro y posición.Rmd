@@ -1,0 +1,315 @@
+---
+title: 'Tutorial 4: Centro y posición'
+author: "Dra. Elizabeth Martínez Gómez"
+subtitle: Estadística I — Matemáticas Aplicadas y Computación
+output:
+  pdf_document:
+    toc: true
+  html_document:
+    toc: true
+    code_folding: show
+    highlight: tango
+    theme: readable
+---
+
+# Propósito
+
+En este tutorial estudiaremos **dónde se concentra una distribución** y cómo localizar observaciones mediante cuantiles y percentiles.
+
+Usaremos dos conjuntos reales del NIST:
+
+- mediciones de velocidad de la luz de Michelson;
+- vida a fatiga de tiras de aluminio 6061-T6.
+
+El segundo conjunto contiene 101 observaciones de vida a fatiga, expresadas en miles de ciclos hasta ruptura. [NIST, BIRNSAUN.DAT](https://www.itl.nist.gov/div898/handbook/datasets/BIRNSAUN.DAT).
+
+```{r setup, message=FALSE, warning=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+library(ggplot2)
+```
+
+---
+
+# 1. Cargar los datos
+
+```{r}
+
+setwd("/home/nani/Documents/Universidad/2027-I/Estadistica/Actividades/Tutoriales estadística")
+michelson <- read.csv("Datos/Dana Amador - MICHELSO.csv")
+attach(michelson)
+
+fatiga <- read.csv("Datos/Dana Amador - BIRNSAUN.csv")
+attach(fatiga)
+
+```
+
+Revisamos los nombres y los cambiamos:
+
+```{r}
+
+names(michelson)
+names(michelson)<- c("velocidad", "temperatura", "dia", "ampm", "conjunto")
+
+names(fatiga)
+
+```
+
+---
+
+# 2. La media como centro algebraico
+
+Para una muestra:
+
+\[
+\bar x=\frac{1}{n}\sum_{i=1}^{n}x_i.
+\]
+
+```{r}
+mean(michelson$velocidad)
+mean(fatiga$vida)
+```
+
+Pero una media aislada dice poco.
+
+Siempre debemos preguntar:
+
+> **¿Cómo es la distribución alrededor de ese valor?**
+
+---
+
+# 3. Mediana
+
+```{r}
+median(michelson$velocidad)
+median(fatiga$vida)
+```
+
+La mediana es un cuantil de orden \(0.5\).
+
+Si ordenamos:
+
+\[
+x_{(1)}\leq x_{(2)}\leq\cdots\leq x_{(n)},
+\]
+
+la posición central determina la mediana, con el tratamiento correspondiente según \(n\).
+
+---
+
+# 4. Media contra mediana
+
+```{r}
+ggplot(fatiga, aes(x = vida)) +
+  geom_histogram(bins = 15) +
+  geom_vline(
+    xintercept = mean(fatiga$vida),
+    linetype = 2
+  ) +
+  geom_vline(
+    xintercept = median(fatiga$vida),
+    linetype = 3
+  ) +
+  labs(
+    title = "Vida a fatiga: media y mediana",
+    x = "Vida (miles de ciclos)",
+    y = "Frecuencia"
+  )
+```
+
+## Actividad 1
+
+Sin mirar todavía los números:
+
+1. ¿Cuál esperas que sea mayor?
+2. ¿Por qué?
+3. ¿Qué característica de la distribución puede producir esa diferencia?
+
+Después verifica:
+
+```{r}
+c(
+  media = mean(fatiga$vida),
+  mediana = median(fatiga$vida)
+)
+```
+
+---
+
+# 5. Sensibilidad de la media
+
+Considera la muestra:
+
+```{r}
+x <- c(4, 5, 5, 6, 6, 7, 7, 8, 9)
+mean(x)
+median(x)
+```
+
+Agregamos una observación extrema:
+
+```{r}
+x_ext <- c(x, 100)
+
+mean(x_ext)
+median(x_ext)
+```
+
+## Actividad 2
+
+Explica algebraicamente por qué la media cambia más.
+
+No basta decir “la media es sensible a valores extremos”.
+
+Escribe qué ocurre con:
+
+\[
+\bar x=\frac{1}{n}\sum x_i
+\]
+
+cuando aparece una nueva observación \(M\).
+
+---
+
+# 6. Cuantiles
+
+```{r}
+quantile(fatiga$vida)
+```
+
+Podemos solicitar otros órdenes:
+
+```{r}
+quantile(
+  fatiga$vida,
+  probs = c(0.01, 0.10, 0.25, 0.50, 0.75, 0.90, 0.99)
+)
+```
+
+Estos valores permiten localizar posiciones relativas.
+
+---
+
+# 7. Percentiles
+
+El percentil \(p\) es un cuantil asociado a una proporción acumulada.
+
+Por ejemplo:
+
+```{r}
+quantile(fatiga$vida, 0.90)
+```
+
+Interpreta cuidadosamente:
+
+> El percentil 90 **no** significa que una observación concreta “tenga 90%”.
+
+Significa que aproximadamente 90% de las observaciones quedan por debajo del valor correspondiente, dependiendo del método de cálculo del cuantil.
+
+---
+
+# 8. Actividad 3 — Interpretación
+
+Calcula:
+
+```{r}
+q <- quantile(fatiga$vida, c(.25, .5, .75))
+q
+```
+
+Redacta:
+
+- interpretación del primer cuartil;
+- interpretación de la mediana;
+- interpretación del tercer cuartil.
+
+Después responde:
+
+> ¿Qué porcentaje de las observaciones queda entre \(Q_1\) y \(Q_3\)?
+
+---
+
+# 9. Moda
+
+La moda no tiene por qué ser única.
+
+En datos continuos, además, puede ser poco informativa si casi todos los valores son distintos.
+
+Construye una función sencilla:
+
+```{r}
+moda <- function(x) {
+  ux <- unique(x)
+  ux[which.max(tabulate(match(x, ux)))]
+}
+
+moda(michelson$velocidad)
+```
+
+## Actividad 4
+
+¿Te parece una buena medida de centro para la velocidad de la luz?
+
+Justifica tu respuesta estadísticamente.
+
+---
+
+# 10. Comparación de dos centros
+
+```{r}
+resumen <- data.frame(
+  conjunto = c("Michelson", "Fatiga"),
+  media = c(mean(michelson$velocidad), mean(fatiga$vida)),
+  mediana = c(median(michelson$velocidad), median(fatiga$vida))
+)
+
+resumen
+```
+
+No tiene sentido comparar directamente los valores numéricos de las dos variables porque están en escalas y unidades distintas.
+
+## Idea clave
+
+> Una estadística sólo puede interpretarse en el contexto de la variable y su unidad.
+
+---
+
+# Actividad integradora
+
+Elige uno de los dos conjuntos y escribe un párrafo que incluya:
+
+1. media;
+2. mediana;
+3. dos cuantiles;
+4. interpretación;
+5. comentario sobre posible asimetría.
+
+---
+
+# Autoevaluación
+
+<details>
+<summary>Checklist</summary>
+
+Debes poder:
+
+- calcular e interpretar media;
+- calcular e interpretar mediana;
+- explicar sensibilidad a valores extremos;
+- definir cuantiles;
+- interpretar percentiles;
+- distinguir medida de centro de medida de posición;
+- explicar por qué la unidad importa.
+
+</details>
+
+## Reto matemático
+
+Demuestra que si se añade una observación \(M\) a una muestra de tamaño \(n\),
+
+\[
+\bar x_{\text{nuevo}}
+=
+\frac{n\bar x+M}{n+1}.
+\]
+
+¿Qué sucede con la media cuando \(M\to\infty\)?

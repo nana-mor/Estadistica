@@ -1,0 +1,263 @@
+---
+title: "Tutorial 6: La forma de una distribución"
+subtitle: "Estadística I — Matemáticas Aplicadas y Computación"
+author: "Dra. Elizabeth Martínez Gómez"
+output:
+  html_document: 
+    toc: true
+    code_folding: show
+    highlight: tango
+    theme: readable
+---
+
+# Propósito
+
+Hasta ahora hemos estudiado centro y dispersión. Pero dos distribuciones pueden tener valores de centro y dispersión similares y, aun así, presentar formas muy diferentes.
+
+Usaremos:
+
+- vida a fatiga del aluminio;
+- un conjunto NIST diseñado para mostrar el efecto de valores atípicos.
+
+El conjunto de fatiga contiene 101 mediciones de vida hasta ruptura bajo carga periódica. [NIST, BIRNSAUN.DAT](https://www.itl.nist.gov/div898/handbook/datasets/BIRNSAUN.DAT).
+
+El conjunto `COMPARE-7_1_6.DAT` contiene 90 observaciones y fue incluido por NIST para ilustrar el análisis de valores atípicos. [NIST, COMPARE-7_1_6.DAT](https://www.itl.nist.gov/div898/handbook/datasets/COMPARE-7_1_6.DAT).
+
+```{r setup, message=FALSE, warning=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+
+library(ggplot2)
+
+setwd("/home/nani/Documents/Universidad/2027-I/Estadistica/Actividades/Tutoriales estadística")
+fatiga <- read.csv("Datos/Dana Amador - BIRNSAUN.csv")
+attach(fatiga)
+names(fatiga)
+
+out <- read.csv("Datos/Dana Amador - COMPARE-7_1_6.csv")
+attach(out)
+names(out)
+```
+
+---
+
+# 1. La forma no se reduce a “parece una campana”
+
+```{r}
+ggplot(fatiga, aes(x = vida)) +
+  geom_histogram(bins = 15) +
+  labs(x = "Vida (miles de ciclos)", y = "Frecuencia")
+```
+
+Describe:
+
+- simetría/asimetría;
+- cola derecha o izquierda;
+- concentración;
+- posibles valores extremos;
+- unimodalidad o multimodalidad.
+
+---
+
+# 2. Media y mediana como pistas de asimetría
+
+```{r}
+c(
+  media = mean(fatiga$vida),
+  mediana = median(fatiga$vida)
+)
+```
+
+Una diferencia apreciable entre media y mediana puede ser consistente con asimetría.
+
+**Pero no es una prueba suficiente de la forma.**
+
+Siempre debemos mirar la distribución.
+
+---
+
+# 3. Asimetría basada en momentos
+
+Podemos construir un coeficiente descriptivo basado en el tercer momento central:
+
+\[
+m_k=\frac{1}{n}\sum_{i=1}^n(x_i-\bar{x})^k.
+\]
+
+Una versión sencilla del coeficiente de asimetría es:
+
+\[
+g_1=\frac{m_3}{m_2^{3/2}}.
+\]
+
+```{r}
+skewness_moment <- function(x) {
+  m <- mean(x)
+  m2 <- mean((x - m)^2)
+  m3 <- mean((x - m)^3)
+  m3 / m2^(3/2)
+}
+
+skewness_moment(fatiga$vida)
+```
+
+### Precaución
+
+Esta es una medida descriptiva basada en momentos. Existen diferentes convenciones y correcciones de sesgo para estimar asimetría muestral.
+
+En este curso importa entender **qué momento se está utilizando y qué información geométrica aporta**, no memorizar una única fórmula universal.
+
+---
+
+# 4. Curtosis
+
+El cuarto momento central es:
+
+\[
+m_4=\frac{1}{n}\sum_{i=1}^n(x_i-\bar{x})^4.
+\]
+
+La curtosis basada en momentos puede escribirse:
+
+\[
+\beta_2=\frac{m_4}{m_2^2}.
+\]
+
+La **exceso de curtosis** es:
+
+\[
+g_2=\beta_2-3.
+\]
+
+```{r}
+kurtosis_excess <- function(x) {
+  m <- mean(x)
+  m2 <- mean((x - m)^2)
+  m4 <- mean((x - m)^4)
+  m4 / m2^2 - 3
+}
+
+kurtosis_excess(fatiga$vida)
+```
+
+## Actividad 1
+
+Explica por qué elevar a la cuarta potencia hace que las observaciones alejadas de la media tengan una influencia muy grande.
+
+---
+
+# 5. Valores extremos
+
+```{r}
+ggplot(out, aes(x = y)) +
+  geom_histogram(bins = 15) +
+  labs(x = "Y", y = "Frecuencia")
+```
+
+Observa especialmente el extremo superior.
+
+```{r}
+boxplot(out$y, horizontal = TRUE)
+```
+
+El NIST identifica este conjunto específicamente como ejemplo de análisis de valores atípicos. [NIST](https://www.itl.nist.gov/div898/handbook/datasets/COMPARE-7_1_6.DAT).
+
+---
+
+# 6. Actividad 2 — ¿Qué estadística cambia más?
+
+Calcula:
+
+```{r}
+c(
+  media = mean(out$y),
+  mediana = median(out$y),
+  sd = sd(out$y),
+  IQR = IQR(out$y),
+  asimetria = skewness_moment(out$y),
+  exceso_curtosis = kurtosis_excess(out$y)
+)
+```
+
+Ahora elimina temporalmente la observación máxima:
+
+```{r}
+out_sin_max <- out$y[-which.max(out$y)]
+
+c(
+  media = mean(out_sin_max),
+  mediana = median(out_sin_max),
+  sd = sd(out_sin_max),
+  IQR = IQR(out_sin_max),
+  asimetria = skewness_moment(out_sin_max),
+  exceso_curtosis = kurtosis_excess(out_sin_max)
+)
+```
+
+### Pregunta
+
+¿Qué medidas son particularmente sensibles al valor extremo?
+
+Explica por qué desde las fórmulas.
+
+---
+
+# 7. Unimodalidad y multimodalidad
+
+Una distribución puede presentar más de una concentración de observaciones.
+
+No siempre una sola media representa bien una distribución multimodal.
+
+## Actividad 3
+
+Busca visualmente si alguno de los conjuntos anteriores presenta indicios de más de una concentración.
+
+No afirmes “hay dos poblaciones” sólo porque aparecen dos picos.
+
+Explica qué información adicional necesitarías para sostener esa interpretación.
+
+---
+
+# 8. Síntesis de forma
+
+Para describir una distribución utiliza este orden:
+
+1. localización;
+2. dispersión;
+3. forma;
+4. extremos.
+
+## Actividad 4
+
+Escribe una descripción estadística completa de `fatiga$vida` en 8–12 líneas.
+
+No utilices sólo adjetivos como “grande”, “pequeña” o “normal”.
+
+Incluye medidas y evidencia gráfica.
+
+---
+
+# Autoevaluación
+
+<details>
+<summary>Debes poder explicar</summary>
+
+- qué es un momento central;
+- por qué el tercer momento está relacionado con asimetría;
+- por qué el cuarto momento es sensible a extremos;
+- diferencia entre curtosis y exceso de curtosis;
+- por qué media y mediana pueden ayudar a detectar asimetría;
+- por qué ninguna medida aislada describe completamente una distribución.
+
+</details>
+
+## Reto matemático
+
+Demuestra que para cualquier constante \(c\),
+
+\[
+\frac{1}{n}\sum_{i=1}^n(x_i-c)^2
+\]
+
+se minimiza cuando \(c=\bar{x}\).
+
+Relaciona este resultado con la interpretación de la media como centro de mínimos cuadrados.

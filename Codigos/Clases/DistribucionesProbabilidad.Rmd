@@ -1,11 +1,11 @@
 ---
-title: "DistribucionesProbabilidad"
-author: "Dana Amador"
+title: "Distribuciones de Probabilidad"
+author: "Dana Alejandra Amador Navarro"
 date: '`r Sys.Date()`'
 output:
   html_document: 
     toc: true
-    theme: cerulean
+    css: styles.css
   word_document: default
   pdf_document: default
 ---
@@ -28,13 +28,13 @@ print(resultado2)
 
 ### P(2 < X < 5)
 ```{r}
-resultado3 <- pbinom(4,8,0.2,lower.tail = TRUE) - pbinom(2,8,0.2,lower.tail = TRUE)
+resultado3 <- pbinom(4,8,0.2,lower.tail = TRUE) - pbinom(2,8,0.2,lower.tail = TRUE) # P(2 < X <= 4)
 print(resultado3)
 ```
 
 ```{r}
 # Otra forma:
-resultado4 <- dbinom(x=3,size=8,p=0.2) +dbinom(x=4,size=8,p=0.2)
+resultado4 <- dbinom(x=3,size=8,p=0.2) + dbinom(x=4,size=8,p=0.2) # P(X = 3) + P(X = 4)
 print(resultado4)
 ```
 

@@ -1,0 +1,48 @@
+---
+title: "Repaso 6c"
+author: "Dana Amador"
+date: "2026-09-12"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+## Cálculo de las probabilidades
+
+Se verifica que el resultado proporcionado es correcto, por lo que se calcula $P(-0.85 \leq Z \leq 2.83)$.
+```{r}
+resultado <- pnorm(2.83,0,1,TRUE) - pnorm(-0.85,0,1,TRUE)
+print(resultado)
+```
+Y se presenta la gráfica que se solicita:
+```{r}
+mu <- 0
+sigma <- 1
+
+x <- seq(mu - 4*sigma, mu + 4*sigma, length.out = 500)
+
+y <- dnorm(x, mean = mu, sd = sigma)
+
+plot(
+  x, y,
+  type = "l",
+  xlab = "x",
+  ylab = "f(x)",
+  main = "Distribución Normal Estándar"
+)
+
+x_area <- seq(-0.85, 2.83, length.out = 300)
+y_area <- dnorm(x_area, mean = mu, sd = sigma)
+
+polygon(
+  c(-0.85, x_area, 2.83),
+  c(0, y_area, 0),
+  border = NA
+)
+
+abline(v = c(-0.85, 2.83), lty = 2)
+
+```
+
+

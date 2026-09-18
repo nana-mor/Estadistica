@@ -1,0 +1,301 @@
+---
+title: "Tutorial 2: Variables y escalas de medición"
+subtitle: "Estadística I — Matemáticas Aplicadas y Computación"
+author: "Dra. Elizabeth Martínez Gómez"
+output:
+  html_document: 
+    toc: true
+    code_folding: show
+    highlight: tango
+    theme: readable
+---
+
+# Propósito
+
+Clasificar variables no es un ejercicio de vocabulario. La clasificación determina qué operaciones y representaciones tienen sentido.
+
+Usaremos datos reales del NIST sobre:
+
+- diámetros producidos por máquinas;
+- calibración de un sistema óptico.
+
+El NIST documenta explícitamente las variables y el propósito de estos conjuntos. [NIST — Data Sets](https://www.itl.nist.gov/div898/handbook/datasets.htm).
+
+```{r setup, message=FALSE, warning=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+library(ggplot2)
+```
+
+---
+
+# 1. Cuatro preguntas para clasificar una variable
+
+Para cada variable pregunta:
+
+1. ¿Qué representa?
+2. ¿Qué valores puede tomar?
+3. ¿Existe un orden natural?
+4. ¿Qué operaciones aritméticas tienen interpretación?
+
+La clasificación:
+
+- cualitativa/cuantitativa;
+- discreta/continua;
+- nominal/ordinal/intervalo/razón
+
+responde preguntas diferentes.
+
+---
+
+# 2. Datos de máquinas
+
+```{r}
+
+setwd("/home/nani/Documents/Universidad/2027-I/Estadistica/Actividades/Tutoriales estadística")
+data <- read.csv("Datos/Dana Amador - MACHINE.csv")
+attach(data)
+
+str(data)
+```
+
+Tenemos:
+
+| Variable | Descripción |
+|---|---|
+| MACHINE | número de máquina |
+| DAY | día |
+| TIME | mañana/tarde |
+| SAMPLE | muestra |
+| DIAMETER | diámetro |
+
+El propio archivo NIST identifica MACHINE, DAY, TIME y SAMPLE como variables de factor y DIAMETER como variable dependiente. [NIST, MACHINE.DAT](https://www.itl.nist.gov/div898/handbook/datasets/MACHINE.DAT).
+
+---
+
+# 3. Actividad 1 — Clasificación
+
+Clasifica cada variable en términos estadísticos.
+
+| Variable | Cualitativa/Cuantitativa | Discreta/Continua | Escala |
+|---|---|---|---|
+| MACHINE |cualitativa | nominal |1, 2, 3 máquinas |
+| DAY | cualitativa | ordinal |1, 2, 3, ... días |
+| TIME | cualitativa| nominal/dicotómica |1 = AM, 2 = PM |
+| SAMPLE | cualitativa | nominal |1, 2, 3 ... 10 |
+| DIAMETER | cuantitativa | continua |pulgadas |
+
+Machine: Clasifica las 3 máquinas. Aunque se trate de números, estos funcionan como simples etiquetas y no es posible realizar operaciones con ellos.
+
+Day: Aunque por lo general las fechas se tratan como una variable cuantitativa, para este caso no es necesario realizar operaciones con el tiempo. En cambio, sólo se necesita hacer una diferenciación entre qué día fue hecha cada medición, sin un orden de importancia particular pero sí con una secuencia temporal.
+
+Time: Sólo puede adquirir 2 valores numéricos que corresponden a AM y PM, que son valores de tipo cualitativo sin prioridad o secuencia.
+
+Sample: Es la muestra que está enumerada del 1 al 10 para cada combinación de máquina, día y tiempo, con una secuencia pero sin un orden de importancia. 
+
+Diameter: Las mediciones son de tipo cuantitativo, pues se pueden hacer operaciones con ellas, y se considerarn continuas por la naturaleza de los valores que puede tomar dentro de los decimales.
+
+**No continúes hasta justificar cada decisión.**
+
+---
+
+# 4. Un código numérico puede representar una categoría
+
+Observa:
+
+```{r}
+table(data$MACHINE)
+table(data$TIME)
+```
+
+Que `MACHINEe` sea 1, 2 o 3 no significa que:
+
+\[
+3=2+1
+\]
+
+tenga significado estadístico.
+
+El número es un **código**.
+
+Conviene explicitarlo:
+
+```{r}
+data$MACHINE <- factor(data$MACHINE)
+data$TIME <- factor(
+  data$TIME,
+  levels = c(1, 2),
+  labels = c("AM", "PM")
+)
+
+str(data)
+```
+
+---
+
+# 5. Escala de medición
+
+La pregunta importante es:
+
+> ¿Qué transformaciones preservan la información de la variable?
+
+### Nominal
+
+Sólo distingue categorías.
+
+### Ordinal
+
+Permite ordenar categorías.
+
+### Intervalo
+
+Las diferencias tienen significado, pero el cero no representa ausencia.
+
+### Razón
+
+Además de las diferencias, las razones tienen interpretación.
+
+Por ejemplo, para una longitud \(L\):
+
+\[
+\frac{2L}{L}=2.
+\]
+
+Para una temperatura Celsius, en cambio, afirmar que \(20^\circ C\) es “el doble de caliente” que \(10^\circ C\) no tiene sentido físico.
+
+---
+
+# 6. Datos de calibración
+
+El NIST proporciona un conjunto de 40 mediciones realizadas sobre 10 artefactos de ancho de línea mediante un sistema óptico. Las dos primeras columnas representan el ancho conocido del artefacto y el ancho medido. [NIST, CALIBRATIONLINE.DAT](https://www.itl.nist.gov/div898/handbook/datasets/CALIBRATIONLINE.DAT).
+
+```{r}
+
+setwd("/home/nani/Documents/Universidad/2027-I/Estadistica/Actividades/Tutoriales estadística")
+cal <- read.csv("Datos/Dana Amador - CALIBRATIONLINE.csv")
+
+names(cal)[1:2] <- c("ancho_referencia", "ancho_medido")
+
+head(cal[,1:2])
+```
+
+---
+
+# 7. Actividad 2 — ¿Qué operaciones tienen sentido?
+
+Considera `ancho_referencia` y `ancho_medido`.
+
+Responde:
+
+1. ¿Son cuantitativas? Sí
+2. ¿Son continuas? Sí
+3. ¿Cuál es su escala? Pulgadas
+4. ¿Tiene sentido calcular una diferencia? Sí, y representaría la diferencia con la medición.
+5. ¿Tiene sentido calcular un cociente? Sí, y representaría en qué proporción cambia de medida una con otra.
+6. ¿Qué significaría que el cociente fuera cercano a 1? Que hubo poco error en la medición.
+
+Ahora calcula:
+
+```{r}
+cal$sesgo <- cal$ancho_medido - cal$ancho_referencia
+head(cal)
+```
+
+La diferencia tiene una interpretación directa como **error de medición con signo**.
+
+---
+
+# 8. Actividad 3 — Diseña la gráfica adecuada
+
+Para cada situación elige una representación y justifica:
+
+1. número de máquina;
+
+    La mejor opción es la gráfica de barras, pues esta sirve para representar variables cualitativas.
+
+2. diámetro;
+
+    La mejor opción es el histograma, pues este es mejor para representar la frecuencia de variables cuantitativas.
+
+3. diámetro por máquina;
+
+    La mejor opción es el diagrama de caja y bigoes, pues este permite resumir y comparar la distribución de un conjunto de datos.
+
+4. relación entre ancho de referencia y ancho medido.
+
+    La mejor opción es el de dispersión. Primero, porque las demás opciones representan frecuencia, mientras que la dispersión grafica puntos que representan la relación entre dos variables.
+
+Opciones:
+
+- barras;
+- histograma;
+- caja y bigotes;
+- dispersión.
+
+**La respuesta debe incluir una justificación estadística, no sólo “porque R lo permite”.**
+
+---
+
+# 9. Conversión entre representaciones
+
+```{r}
+ggplot(data, aes(x = MACHINE, y = DIAMETER)) +
+  geom_boxplot() +
+  labs(x = "Máquina", y = "Diámetro")
+```
+
+Aquí convertimos una variable codificada numéricamente en una variable categórica explícita.
+
+Esto cambia la interpretación de la gráfica.
+
+---
+
+# 10. Actividad final
+
+Construye una tabla con:
+
+- variable;
+- unidad;
+- escala;
+- tipo;
+- operación estadística que consideras válida;
+- gráfica apropiada.
+
+
+| Variable | Unidad | Escala | Tipo | Operación Estadística | Gráfica apropiada |
+|---|---|---|---|---|---|
+| MACHINE | 1, 2, 3 | Máquina | Cualitativa nominal | X | Barras, Caja y Bigotes |
+| DAY | 1,2,3,4... | Días | Cualitativa ordinal | X | Barras |
+| TIME | 1, 2 | AM, PM| Cualitativa nominal| X  | Caja y bigotes |
+| SAMPLE | 1, 2, ..., 10 | Muestras | Cualitativa ordinal | X | Dispersión (Con var. diámetro) |
+| DIAMETER | Decimal | Pulgadas | Cuantitativa continua | Media, Varianza, Cuantiles | Histograma, Dispersión |
+| ANCHO_MEDIDO | Decimal | Pulgadas | Cuantitativa continua | Media, Varianza, Cuantiles | Histograma, dispersión |
+| ANCHO_REFERENCIA | Decimal | Pulgadas | Cuantitativa continua | Media, Varianza, Cuantiles | Histograma, dispersión |
+
+Después responde:
+
+> **¿Por qué conocer la escala de medición antes de analizar los datos evita errores conceptuales?**
+
+Porque conocer la escala permite hacer precisiones con los datos que de otra forma pasarían desapercibidas. Además, no analizar el significado del dominio de cada variable puede provocar realizar operaciones u obtener resultados inútiles, o realizar operaciones estadísticas con una ponderación incorrecta.
+
+---
+
+# Autoevaluación
+
+<details>
+<summary>Indicadores</summary>
+
+Debes poder:
+
+- distinguir variable de código;
+- distinguir discreta de continua;
+- distinguir nominal, ordinal, intervalo y razón;
+- justificar operaciones estadísticas;
+- seleccionar una gráfica a partir del tipo de variable;
+- explicar por qué convertir códigos numéricos en factores puede ser importante.
+
+</details>
+
+## Reto
+
+Encuentra un ejemplo en matemáticas aplicadas donde una variable parezca numérica, pero tratarla como una variable cuantitativa produzca una interpretación incorrecta.
+

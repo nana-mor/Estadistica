@@ -1,0 +1,1085 @@
+---
+title: "Tutorial 1: Probabilidad con R"
+subtitle: "Estadística I — Matemáticas Aplicadas y Computación"
+author: Dra. Elizabeth Martínez Gómez
+output:
+  html_document: 
+    toc: true
+    toc_depth: 2
+    code_folding: show
+    theme: readable
+    lang: es
+    highlight: tango
+---
+
+En este tutorial utilizaremos **R para explorar distribuciones de probabilidad, calcular probabilidades y visualizar su significado**.
+
+El objetivo no es aprender comandos de R de manera aislada. La idea es desarrollar una rutina de trabajo:
+
+\[
+\boxed{\text{situación}\;\longrightarrow\;\text{variable aleatoria}\;\longrightarrow\;\text{distribución}\;\longrightarrow\;\text{evento}\;\longrightarrow\;\text{probabilidad}\;\longrightarrow\;R}
+\]
+
+En particular, aprenderás a:
+
+- distinguir variables aleatorias **discretas y continuas**;
+- reconocer algunas distribuciones de uso frecuente;
+- identificar sus parámetros;
+- calcular probabilidades exactas, acumuladas, de cola y entre dos valores;
+- obtener cuantiles;
+- representar gráficamente distribuciones y regiones de probabilidad;
+- interpretar el resultado obtenido con R.
+
+> **Idea central:** primero decide matemáticamente **qué probabilidad quieres calcular** y después utiliza R para obtenerla y comprobarla.
+
+
+# 1. Una distribución de probabilidad: ¿qué debemos reconocer?
+
+Una **variable aleatoria** asigna valores numéricos a los resultados de un experimento aleatorio.
+
+Ejemplos:
+
+- \(X\) = número de piezas defectuosas en una muestra;
+- \(X\) = número de llamadas recibidas durante una hora;
+- \(X\) = tiempo de reparación de un automóvil;
+- \(X\) = vida útil de una lámpara.
+
+La **distribución de probabilidad** describe cómo se distribuye la probabilidad entre los posibles valores de la variable aleatoria.
+
+## 1.1 Discreta o continua
+
+Una variable aleatoria **discreta** toma valores aislados. Por ejemplo, un número de llamadas puede ser 0, 1, 2, 3, etc.
+
+Su función de masa satisface:
+
+\[
+p_X(x)=P(X=x),
+\]
+
+\[
+p_X(x)\geq 0,
+\qquad
+\sum_xp_X(x)=1
+\]
+
+Una variable aleatoria **continua** puede tomar cualquier valor dentro de un intervalo. Su distribución se describe mediante una densidad \(f_X(x)\), que debe satisfacer:
+
+\[
+f_X(x)\geq0,
+\qquad
+\int_{-\infty}^{\infty}f_X(x)\,dx=1
+\]
+
+Las probabilidades son áreas:
+
+\[
+P(a<X<b)=\int_a^b f_X(x)\,dx
+\]
+
+Por ello, para una variable continua:
+
+\[
+P(X=a)=0
+\]
+
+
+## 1.3 Eventos, unión, intersección e independencia
+
+Antes de elegir una distribución, también necesitamos traducir correctamente el enunciado a un **evento**.
+
+Para dos eventos \(A\) y \(B\):
+
+\[
+P(A\cup B)=P(A)+P(B)-P(A\cap B)
+\]
+
+Si son mutuamente excluyentes,
+
+\[
+A\cap B=\varnothing
+\quad\Longrightarrow\quad
+P(A\cap B)=0
+\]
+
+Si son independientes,
+
+\[
+\boxed{P(A\cap B)=P(A)P(B)}
+\]
+
+La probabilidad condicional se define como
+
+\[
+P(A\mid B)=\frac{P(A\cap B)}{P(B)},\qquad P(B)>0
+\]
+
+Aquí solo la repasaremos como herramienta básica. La estudiaremos con mayor detalle en la distribución exponencial, donde aparece la propiedad de falta de memoria.
+
+### Actividad 1B — Reconoce la relación entre eventos
+
+Supón que \(P(A)=0.40\), \(P(B)=0.30\) y \(P(A\cap B)=0.12\).
+
+1. Comprueba si \(A\) y \(B\) son independientes.
+2. Calcula \(P(A\mid B)\).
+3. Explica qué información aporta la condición \(B\) sobre la probabilidad de \(A\).
+
+**No uses R todavía.** El objetivo es practicar la traducción matemática.
+
+## 1.4 ¿Una función puede ser una distribución de probabilidad?
+
+Cuando te entregan una función y te preguntan si puede representar una distribución, no basta con observar su forma. Debes verificar las condiciones matemáticas.
+
+Por ejemplo, para una función de masa discreta definida por
+
+\[
+p_X(x)=\frac{x+1}{6},\qquad x=0,1,2,
+\]
+
+comprobamos que las probabilidades son no negativas y que
+
+\[
+\sum_{x=0}^{2}\frac{x+1}{6}=1
+\]
+
+Por tanto, sí puede ser una función de masa de probabilidad.
+
+Para una densidad continua, por ejemplo
+
+\[
+f_X(x)=2x,\qquad 0<x<1,
+\]
+
+se verifica
+
+\[
+f_X(x)\geq0
+\]
+
+y
+
+\[
+\int_0^1 2x\,dx=1
+\]
+
+La idea que debes conservar es:
+
+\[
+\boxed{\text{discreta}\rightarrow\text{suma}=1\qquad
+\text{continua}\rightarrow\text{integral}=1}
+\]
+
+Esta comprobación será necesaria cuando trabajes con funciones propuestas como posibles distribuciones.
+
+# 2. El lenguaje de las distribuciones en R
+
+R utiliza una estructura muy sencilla para muchas distribuciones.
+
+| Prefijo | Función | Significado |
+|:---|:---|:---|
+| `d` | densidad / masa | En discreta: \(P(X=x)\); en continua: \(f_X(x)\) |
+| `p` | probabilidad acumulada | \(P(X\leq x)\) |
+| `q` | cuantil | Encuentra \(x\) a partir de una probabilidad |
+| `r` | aleatoria | Genera observaciones de la distribución |
+
+Por ejemplo, para la normal:
+
+```{r}
+dnorm(0)
+pnorm(0)
+qnorm(0.975)
+rnorm(5)
+```
+
+En este tutorial nos interesan principalmente `d`, `p` y `q`.
+
+> **Atención:** en una distribución continua, `dnorm(x)` no calcula \(P(X=x)\). Devuelve la **densidad** en \(x\). Las probabilidades se obtienen mediante áreas, y R las calcula con `pnorm()`.
+
+## 2.1 Traducir una pregunta a R
+
+Antes de escribir un comando, completa mentalmente estas cuatro preguntas:
+
+1. ¿Cuál es la variable aleatoria?
+2. ¿Qué distribución tiene?
+3. ¿Cuáles son sus parámetros?
+4. ¿Qué evento representa la pregunta?
+
+Por ejemplo:
+
+> Una variable \(X\sim Binomial(20,0.10)\). ¿Cuál es la probabilidad de obtener a lo más 3 éxitos?
+
+La traducción es:
+
+\[
+X\sim Binomial(20,0.10)
+\]
+
+\[
+P(X\leq3)
+\]
+
+Entonces usamos:
+
+```{r}
+pbinom(3, size = 20, prob = 0.10)
+```
+
+# 3. Distribuciones discretas
+
+## 3.1 Bernoulli: un ensayo, dos resultados
+
+La distribución de Bernoulli describe un solo ensayo con dos resultados: éxito y fracaso.
+
+Si la probabilidad de éxito es \(p\), entonces:
+
+\[
+X\sim Bernoulli(p),
+\]
+
+con
+
+\[
+P(X=1)=p,
+\qquad
+P(X=0)=1-p
+\]
+
+En R podemos calcular:
+
+```{r}
+p <- 0.30
+
+p0 <- dbinom(0, size = 1, prob = p)
+p1 <- dbinom(1, size = 1, prob = p)
+
+c(P_X0 = p0, P_X1 = p1)
+```
+
+Observa que la Bernoulli es la base conceptual de la distribución binomial.
+
+## 3.2 Binomial: contar éxitos
+
+La distribución binomial modela el número de éxitos en \(n\) ensayos cuando:
+
+1. hay un número fijo \(n\) de ensayos;
+2. cada ensayo tiene dos resultados posibles;
+3. la probabilidad de éxito \(p\) es constante;
+4. los ensayos son independientes.
+
+Entonces:
+
+\[
+X\sim Binomial(n,p)
+\]
+
+Su función de masa es:
+
+\[
+P(X=x)=\binom{n}{x}p^x(1-p)^{n-x}
+\]
+
+### Ejemplo
+
+Una máquina produce piezas y la probabilidad de que una pieza sea defectuosa es \(0.10\). Se inspeccionan 20 piezas.
+
+Sea
+
+\[
+X=\text{número de piezas defectuosas}
+\]
+
+Entonces:
+
+\[
+X\sim Binomial(20,0.10)
+\]
+
+### Probabilidad exacta
+
+\[
+P(X=3)
+\]
+
+```{r}
+n <- 20
+p <- 0.10
+
+dbinom(3, size = n, prob = p)
+```
+
+### Probabilidad acumulada
+
+\[
+P(X\leq3)
+\]
+
+```{r}
+pbinom(3, size = n, prob = p)
+```
+
+### Probabilidad de cola derecha
+
+\[
+P(X>3)
+\]
+
+Usando el complemento:
+
+\[
+P(X>3)=1-P(X\leq3)
+\]
+
+```{r}
+1 - pbinom(3, size = n, prob = p)
+```
+
+También podemos usar:
+
+```{r}
+pbinom(3, size = n, prob = p, lower.tail = FALSE)
+```
+
+### Probabilidad entre dos valores
+
+Para
+
+\[
+P(2\leq X\leq5),
+\]
+
+usamos:
+
+\[
+P(X\leq5)-P(X\leq1)
+\]
+
+```{r}
+pbinom(5, size = n, prob = p) -
+  pbinom(1, size = n, prob = p)
+```
+
+También podemos comprobarlo sumando las probabilidades individuales:
+
+```{r}
+sum(dbinom(2:5, size = n, prob = p))
+```
+
+### Visualización
+
+```{r}
+x <- 0:n
+prob <- dbinom(x, size = n, prob = p)
+
+barplot(
+  prob,
+  names.arg = x,
+  xlab = "Número de piezas defectuosas",
+  ylab = "P(X = x)",
+  main = "Binomial(20, 0.10)"
+)
+```
+
+### Actividad 2 — Explora la binomial
+
+Utiliza \(X\sim Binomial(20,0.30)\).
+
+1. Calcula \(P(X=5)\).
+2. Calcula \(P(X\leq5)\).
+3. Calcula \(P(X>5)\).
+4. Calcula \(P(4\leq X\leq8)\).
+5. Grafica la distribución.
+6. Cambia \(p\) a 0.50 y vuelve a graficar.
+7. Describe qué cambia en la distribución.
+
+> **Antes de ejecutar R:** escribe primero la probabilidad que quieres calcular.
+
+## 3.3 Poisson: contar ocurrencias
+
+La distribución de Poisson es útil para modelar el número de ocurrencias de un evento en un intervalo cuando existe una tasa media \(\lambda\) y el modelo de Poisson es apropiado.
+
+\[
+X\sim Poisson(\lambda)
+\]
+
+Su función de masa es:
+
+\[
+P(X=x)=e^{-\lambda}\frac{\lambda^x}{x!}
+\]
+
+### Ejemplo
+
+Una central recibe en promedio 4 llamadas por minuto.
+
+\[
+X=\text{número de llamadas en un minuto}
+\]
+
+\[
+X\sim Poisson(4)
+\]
+
+Exactamente 6 llamadas:
+
+```{r}
+lambda <- 4
+
+dpois(6, lambda = lambda)
+```
+
+A lo más 6:
+
+```{r}
+ppois(6, lambda = lambda)
+```
+
+Más de 6:
+
+```{r}
+ppois(6, lambda = lambda, lower.tail = FALSE)
+```
+
+### Gráfica
+
+```{r}
+x <- 0:15
+prob <- dpois(x, lambda = lambda)
+
+barplot(
+  prob,
+  names.arg = x,
+  xlab = "Número de llamadas",
+  ylab = "P(X = x)",
+  main = "Poisson(4)"
+)
+```
+
+### Actividad 3 — Poisson
+
+Para \(X\sim Poisson(4)\):
+
+1. Calcula \(P(X=2)\).
+2. Calcula \(P(X\leq2)\).
+3. Calcula \(P(X>8)\).
+4. Calcula \(P(3\leq X\leq6)\).
+5. Grafica la distribución.
+6. Cambia \(\lambda\) a 8. ¿Qué observas?
+
+# 4. Distribuciones continuas: la probabilidad como área
+
+En una variable continua, la función de densidad describe la forma de la distribución, pero **la probabilidad es un área**.
+
+\[
+P(a<X<b)=\int_a^b f_X(x)\,dx
+\]
+
+Esta idea será central para la uniforme, la normal y la exponencial.
+
+## 4.1 Uniforme continua
+
+Si
+
+\[
+X\sim U(a,b),
+\]
+
+su densidad es constante:
+
+\[
+f_X(x)=\frac{1}{b-a},
+\qquad a<x<b
+\]
+
+### Ejemplo
+
+Sea:
+
+\[
+X\sim U(420,460)
+\]
+
+La densidad puede visualizarse así:
+
+```{r}
+a <- 420
+b <- 460
+
+x <- seq(a, b, length.out = 500)
+
+plot(
+  x,
+  dunif(x, min = a, max = b),
+  type = "l",
+  xlab = "x",
+  ylab = "f(x)",
+  main = "Distribución Uniforme(420, 460)"
+)
+```
+
+### Probabilidad entre dos valores
+
+Por ejemplo:
+
+\[
+P(425<X<435)
+\]
+
+En R:
+
+```{r}
+punif(435, min = a, max = b) -
+  punif(425, min = a, max = b)
+```
+
+La respuesta representa el área bajo la densidad entre 425 y 435.
+
+### Actividad 4 — Uniforme
+
+Para \(X\sim U(420,460)\):
+
+1. Calcula \(P(X<430)\).
+2. Calcula \(P(425<X<435)\).
+3. Calcula \(P(X>450)\).
+4. Representa gráficamente la densidad.
+5. Explica por qué la probabilidad puede interpretarse como un área.
+
+# 5. Distribución normal
+
+La distribución normal es una de las distribuciones fundamentales que utilizaremos en Estadística I.
+
+Se escribe:
+
+\[
+X\sim N(\mu,\sigma^2)
+\]
+
+Su densidad es:
+
+\[
+f(x)=
+\frac{1}{\sigma\sqrt{2\pi}}
+\exp\left[-\frac12\left(\frac{x-\mu}{\sigma}\right)^2\right]
+\]
+
+En R es importante recordar que `sd` representa la **desviación estándar** \(\sigma\), no la varianza \(\sigma^2\).
+
+## 5.1 Graficar una normal
+
+Consideremos:
+
+\[
+X\sim N(70,10^2)
+\]
+
+```{r}
+mu <- 70
+sigma <- 10
+
+x <- seq(mu - 4*sigma, mu + 4*sigma, length.out = 500)
+
+y <- dnorm(x, mean = mu, sd = sigma)
+
+plot(
+  x, y,
+  type = "l",
+  xlab = "x",
+  ylab = "f(x)",
+  main = "Distribución Normal(70, 10²)"
+)
+```
+
+## 5.2 Probabilidad a la izquierda
+
+Queremos:
+
+\[
+P(X\leq80)
+\]
+
+```{r}
+pnorm(80, mean = mu, sd = sigma)
+```
+
+## 5.3 Probabilidad a la derecha
+
+Queremos:
+
+\[
+P(X>80)
+\]
+
+```{r}
+pnorm(80, mean = mu, sd = sigma, lower.tail = FALSE)
+```
+
+## 5.4 Probabilidad entre dos valores
+
+Queremos:
+
+\[
+P(60<X<80)
+\]
+
+```{r}
+pnorm(80, mean = mu, sd = sigma) -
+  pnorm(60, mean = mu, sd = sigma)
+```
+
+## 5.5 Visualizar el área
+
+La probabilidad anterior puede verse directamente en la gráfica.
+
+```{r}
+x <- seq(30, 110, length.out = 1000)
+y <- dnorm(x, mean = mu, sd = sigma)
+
+plot(
+  x, y,
+  type = "l",
+  xlab = "x",
+  ylab = "f(x)",
+  main = "Área correspondiente a P(60 < X < 80)"
+)
+
+x_area <- seq(60, 80, length.out = 300)
+y_area <- dnorm(x_area, mean = mu, sd = sigma)
+
+polygon(
+  c(60, x_area, 80),
+  c(0, y_area, 0),
+  border = NA
+)
+
+abline(v = c(60, 80), lty = 2)
+
+prob <- pnorm(80, mu, sigma) - pnorm(60, mu, sigma)
+prob
+```
+
+> **Interpretación:** el número que devuelve `pnorm()` representa el área correspondiente al evento que escribiste matemáticamente.
+
+## 5.6 Estandarización
+
+Si
+
+\[
+X\sim N(\mu,\sigma^2),
+\]
+
+podemos transformar a una normal estándar mediante:
+
+\[
+Z=\frac{X-\mu}{\sigma},
+\qquad Z\sim N(0,1)
+\]
+
+Para \(X=80\):
+
+\[
+z=\frac{80-70}{10}=1
+\]
+
+```{r}
+z <- (80 - mu) / sigma
+z
+```
+
+Podemos comprobar que:
+
+```{r}
+pnorm(80, mean = mu, sd = sigma)
+pnorm(1)
+```
+
+dan el mismo resultado.
+
+## 5.7 Cuantiles
+
+A veces la pregunta se plantea al revés: conocemos una probabilidad y queremos encontrar el valor de \(x\).
+
+Por ejemplo, buscamos \(z\) tal que:
+
+\[
+P(Z\leq z)=0.975
+\]
+
+En R:
+
+```{r}
+qnorm(0.975)
+```
+
+Para una normal con media 70 y desviación estándar 10:
+
+\[
+P(X\leq x)=0.975
+\]
+
+```{r}
+qnorm(0.975, mean = 70, sd = 10)
+```
+
+### Actividad 5 — Normal
+
+Sea:
+
+\[
+X\sim N(45,8^2)
+\]
+
+1. Calcula \(P(X\leq58)\).
+2. Calcula \(P(X>58)\).
+3. Calcula \(P(40<X<50)\).
+4. Estandariza el valor 58.
+5. Verifica mediante R que el cálculo con \(X\) y con \(Z\) coincide.
+6. Grafica la distribución y representa la región correspondiente a \(40<X<50\).
+
+# 6. Distribución exponencial: probabilidades y falta de memoria
+
+La distribución exponencial se utiliza para modelar tiempos de espera o tiempos de vida bajo determinadas condiciones.
+
+Si
+
+\[
+X\sim Exponencial(\lambda),
+\]
+
+su densidad es:
+
+\[
+f_X(x)=\lambda e^{-\lambda x},
+\qquad x>0
+\]
+
+Su media es:
+
+\[
+E(X)=\frac{1}{\lambda}
+\]
+
+Por tanto, si conocemos la duración media \(m\):
+
+\[
+\lambda=\frac{1}{m}
+\]
+
+## 6.1 Ejemplo: vida útil de una lámpara
+
+Supongamos que la vida útil de una lámpara tiene una duración media de 0.5 miles de horas.
+
+Entonces:
+
+\[
+E(X)=0.5
+\]
+
+y
+
+\[
+\lambda=\frac{1}{0.5}=2
+\]
+
+En R podemos trabajar con `rate = 2`.
+
+```{r}
+lambda <- 2
+```
+
+### Probabilidad de supervivencia
+
+Queremos:
+
+\[
+P(X>0.7)
+\]
+
+```{r}
+pexp(0.7, rate = lambda, lower.tail = FALSE)
+```
+
+### Tiempo de reemplazo
+
+Queremos encontrar \(t\) tal que no más del 10 % de las lámparas fallen antes de ser reemplazadas:
+
+\[
+P(X\leq t)=0.10
+\]
+
+Por tanto:
+
+```{r}
+qexp(0.10, rate = lambda)
+```
+
+El resultado está en miles de horas.
+
+## 6.2 Probabilidad condicional y falta de memoria
+
+Aquí aparece una propiedad particularmente importante de la distribución exponencial.
+
+Queremos calcular:
+
+\[
+P(X>1.2\mid X>0.7)
+\]
+
+Por definición:
+
+\[
+P(X>1.2\mid X>0.7)
+=
+\frac{P(X>1.2\cap X>0.7)}{P(X>0.7)}
+\]
+
+Como
+
+\[
+\{X>1.2\}\subset\{X>0.7\},
+\]
+
+la intersección es \(\{X>1.2\}\). Entonces:
+
+\[
+P(X>1.2\mid X>0.7)
+=
+\frac{P(X>1.2)}{P(X>0.7)}
+\]
+
+En R:
+
+```{r}
+P12 <- pexp(1.2, rate = lambda, lower.tail = FALSE)
+P07 <- pexp(0.7, rate = lambda, lower.tail = FALSE)
+
+P12 / P07
+```
+
+Ahora comparemos con:
+
+\[
+P(X>0.5)
+\]
+
+```{r}
+pexp(0.5, rate = lambda, lower.tail = FALSE)
+```
+
+Para la distribución exponencial se cumple la propiedad de **falta de memoria**:
+
+\[
+P(X>s+t\mid X>s)=P(X>t)
+\]
+
+En nuestro ejemplo, como \(1.2=0.7+0.5\):
+
+\[
+P(X>1.2\mid X>0.7)=P(X>0.5)
+\]
+
+### Actividad 6 — Exponencial
+
+Sea \(X\sim Exponencial(2)\), donde el tiempo está medido en miles de horas.
+
+1. Calcula \(P(X>0.5)\).
+2. Calcula \(P(X>1.2\mid X>0.7)\) utilizando la definición de probabilidad condicional.
+3. Compara ambos resultados.
+4. Explica con tus palabras qué significa la falta de memoria.
+5. Grafica la densidad exponencial y describe su forma.
+
+> **Importante:** en este tutorial la probabilidad condicional se estudia de manera explícita únicamente mediante la distribución exponencial, donde tiene una interpretación especialmente significativa.
+
+# 7. Una mirada a dos variables aleatorias
+
+En Estadística I también trabajaremos con distribuciones conjuntas. Aquí solo haremos una introducción para conectar con problemas de dos variables.
+
+Una densidad conjunta \(f_{X,Y}(x,y)\) debe satisfacer:
+
+\[
+f_{X,Y}(x,y)\geq0
+\]
+
+y
+
+\[
+\int\!\!\int f_{X,Y}(x,y)\,dx\,dy=1
+\]
+
+sobre su región de definición.
+
+Una probabilidad sobre una región \(A\) se obtiene mediante:
+
+\[
+P((X,Y)\in A)=
+\iint_A f_{X,Y}(x,y)\,dx\,dy
+\]
+
+Las marginales se obtienen integrando la variable que no interesa:
+
+\[
+f_X(x)=\int f_{X,Y}(x,y)\,dy,
+\]
+
+\[
+f_Y(y)=\int f_{X,Y}(x,y)\,dx
+\]
+
+## Ejemplo breve
+
+Considera la densidad conjunta:
+
+\[
+f_{X,Y}(x,y)=x+y,
+\qquad 0<x<1,\quad 0<y<1
+\]
+
+Primero debemos comprobar si realmente es una densidad válida.
+
+```{r}
+# Integral de x+y sobre 0<x<1, 0<y<1
+# El cálculo simbólico se puede hacer analíticamente:
+# integral_0^1 integral_0^1 (x+y) dx dy = 1
+```
+
+Una forma útil de visualizar la densidad es mediante una superficie o un mapa de niveles. Por ejemplo:
+
+```{r}
+x <- seq(0, 1, length.out = 50)
+y <- seq(0, 1, length.out = 50)
+
+z <- outer(x, y, function(x, y) x + y)
+
+persp(
+  x, y, z,
+  theta = 35,
+  phi = 25,
+  xlab = "x",
+  ylab = "y",
+  zlab = "f(x,y)",
+  main = "Densidad conjunta"
+)
+```
+
+### Actividad 7 — Región y marginales
+
+Para la densidad anterior, trabaja con una región **distinta de la que aparece en la tarea**:
+
+\[
+A=\{(x,y):0<x<2/3,\;1/3<y<2/3\}
+\]
+
+1. Verifica matemáticamente que es una densidad válida.
+2. Calcula \(P((X,Y)\in A)\).
+3. Obtén \(f_X(x)\).
+4. Obtén \(f_Y(y)\).
+5. Describe qué cambia respecto al caso de una sola variable aleatoria.
+
+**Sugerencia:** dibuja primero la región de integración. En dos variables, la región es parte esencial del planteamiento.
+
+> **Observación:** aquí el objetivo no es aprender una nueva familia de distribuciones, sino reconocer que el cálculo de una probabilidad sigue siendo un problema de **área/volumen bajo una función**, ahora en dos dimensiones.
+
+# 8. Actividad integradora: piensa antes de usar R
+
+En cada situación sigue esta secuencia:
+
+\[
+\boxed{
+\text{Variable}\rightarrow
+\text{Tipo}\rightarrow
+\text{Distribución}\rightarrow
+\text{Parámetros}\rightarrow
+\text{Evento}\rightarrow
+\text{Cálculo en R}
+}
+\]
+
+## Caso A — Conteo
+
+Una máquina produce piezas con probabilidad de defecto \(p=0.08\). Se seleccionan 25 piezas independientemente.
+
+Sea \(X\) el número de piezas defectuosas.
+
+Calcula:
+
+\[
+P(X\leq3)
+\]
+
+Después calcula:
+
+\[
+P(X>5)
+\]
+
+**Antes de usar R**, escribe la distribución y las expresiones matemáticas.
+
+## Caso B — Variable continua
+
+El tiempo de atención de un servicio se modela como:
+
+\[
+X\sim N(30,5^2)
+\]
+
+Calcula:
+
+\[
+P(25<X<35)
+\]
+
+Después grafica la densidad y representa visualmente la región correspondiente.
+
+## Caso C — Tiempo de vida
+
+Una variable \(X\) tiene distribución exponencial con media 2 horas.
+
+1. Determina \(\lambda\).
+2. Calcula \(P(X>3)\).
+3. Calcula \(P(X>5\mid X>2)\).
+4. Comprueba la propiedad de falta de memoria.
+
+# 9. ¿Cómo se conecta este tutorial con la tarea?
+
+La tarea no consiste solamente en obtener números con R. En cada problema debes decidir qué herramienta matemática corresponde.
+
+| En la tarea | ¿Qué debes recuperar en este tutorial? |
+|:---|:---|
+| Problemas 1–2 | Eventos, independencia y traducción matemática de probabilidades |
+| Problema 3 | Diferencia entre función de masa y densidad; condiciones de validez |
+| Problema 4 | Normal y binomial; planteamiento antes de usar R |
+| Problema 5 | Exponencial, cuantiles y probabilidad condicional |
+| Problema 6 | Normal estándar, cuantiles y representación de áreas |
+| Problema 7 | Densidad conjunta, región de integración y marginales |
+
+> **Importante:** el tutorial utiliza ejemplos distintos de los problemas de la tarea. La finalidad es que aprendas el procedimiento y puedas aplicarlo posteriormente a situaciones nuevas.
+
+# 10. Checklist: ¿ya puedo trabajar con una distribución?
+
+Antes de entregar un ejercicio, verifica:
+
+- [ ] Definí la variable aleatoria.
+- [ ] Determiné si es discreta o continua.
+- [ ] Identifiqué la distribución.
+- [ ] Identifiqué sus parámetros.
+- [ ] Escribí matemáticamente el evento solicitado.
+- [ ] Decidí si necesito `d`, `p` o `q`.
+- [ ] Escribí primero la expresión matemática y después el comando de R.
+- [ ] Interpreté el resultado en el contexto del problema.
+- [ ] Si la variable es continua, entiendo la probabilidad como un área.
+- [ ] Si trabajé con una distribución conjunta, identifiqué correctamente la región de integración.
+
+# 11. Puente hacia Estadística I
+
+El manejo de distribuciones de probabilidad será una herramienta fundamental durante Estadística I.
+
+En particular, necesitarás reconocer que una distribución permite describir el comportamiento probabilístico de una variable y calcular probabilidades asociadas a eventos de interés.
+
+En Estadística I se estudiarán posteriormente otras distribuciones y su papel en las distribuciones muestrales y en la inferencia estadística.
+
+La meta de este repaso es que llegues a esos temas con una herramienta fundamental ya recuperada:
+
+\[
+\boxed{\text{reconocer una distribución y calcular e interpretar sus probabilidades.}}
+\]
+
+---
+
+**Recordatorio final:** R puede hacer el cálculo en una fracción de segundo. Lo importante es que tú puedas explicar **qué está calculando R, por qué esa es la distribución adecuada y qué significa el resultado**.

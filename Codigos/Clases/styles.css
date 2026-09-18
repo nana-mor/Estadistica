@@ -1,0 +1,30 @@
+
+@import url('https://fonts.googleapis.com/css2?family=Raleway:ital,wght@0,100..900;1,100..900&display=swap');
+
+body {
+  font-family: Raleway, Arial, sans-serif;
+  color: #464B71;
+  background-color: #FFF4EA;
+}
+
+h1 {
+  color: #118AB2;
+  border-bottom: 2px solid #7CD5C7;
+  padding-bottom: 5px;
+}
+
+pre.r{
+  background-color: #F2F2ED;
+  border: 1px solid #7CD5C7;
+}
+
+table {
+  width: 100%;
+  margin-bottom: 1rem;
+  border-collapse: collapse;
+}
+
+th, td {
+  padding: 8px;
+  border: 1px solid #ddd;
+}

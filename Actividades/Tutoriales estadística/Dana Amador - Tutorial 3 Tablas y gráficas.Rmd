@@ -1,0 +1,415 @@
+---
+title: "Tutorial 3: Tablas y gráficas"
+subtitle: "Estadística I — Matemáticas Aplicadas y Computación"
+author: "Dra. Elizabeth Martínez Gómez"
+output:
+  html_document: 
+    toc: true
+    code_folding: show
+    highlight: tango
+    theme: readable
+---
+
+# Propósito
+
+Una gráfica no es decoración: es una representación de la distribución de los datos.
+
+En este tutorial trabajaremos con las mediciones de **Michelson sobre la velocidad de la luz en aire**, publicadas en la colección de datos del NIST/SEMATECH. El conjunto contiene 100 observaciones y, además de la velocidad de la luz, registra temperatura, día, mañana/tarde y conjunto experimental.
+
+La idea central será aprender a elegir una representación de acuerdo con la **naturaleza de la variable y la pregunta estadística**.
+
+```{r setup, message=FALSE, warning=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+library(ggplot2)
+
+setwd("/home/nani/Documents/Universidad/2027-I/Estadistica/Actividades/Tutoriales estadística")
+
+michelson <- read.csv("Datos/Dana Amador - MICHELSO.csv")
+attach(michelson)
+```
+
+# 1. ¿Qué estamos observando?
+
+Cada fila representa una observación de la velocidad de la luz realizada dentro del experimento histórico de Michelson.
+
+Variables principales:
+
+```{r}
+str(michelson)
+summary(michelson)
+```
+
+Cambiamos los nombres de las columnas para facilitar el análisis:
+
+```{r}
+
+names(michelson)<- c("velocidad", "temperatura", "dia", "ampm", "conjunto")
+names(michelson)
+
+```
+
+
+## Actividad 1 — Antes de graficar
+
+Responde primero sin producir ninguna gráfica:
+
+1. ¿Cuál es la unidad estadística?
+
+2. ¿Cuál es la variable respuesta principal?
+
+3. ¿Qué variables podrían considerarse explicativas o de contexto?
+
+4. ¿Cuáles son cuantitativas y cuáles funcionan como variables categóricas aunque estén almacenadas como números?
+
+5. Formula una pregunta descriptiva y una pregunta de comparación que puedan responderse con estos datos.
+
+**Producto:** escribe tus respuestas en 5–8 líneas.
+
+
+Para este ejercicio la unidad estadística es cada medición realizada por el aparato de micheslson, así como el registro de datos de la tierra que parecían relevantes para el experimento. Cada uno de estos datos se convierten en variables, donde la variable respuesta principal es la velocidad de la luz y el resto de ellas pueden considerarse variables explicativas, como la temperatura, el día (que representa la posición respecto al sol a través de la traslación), ampm (que representa en qué periodo del día se realizó la medición) y el conjunto. De todas estas la velocidad y la temperatura son cuantitativas, mientras que lado, día, ampm y conjunto son cualitativas aunque están almacenadas como números. De aquí se pueden desprender 2 preguntas: ¿Cuál es la velocidad mínima registrada? ¿Se tienen más registros de la mañana o de la tarde?
+
+# 2. Frecuencias para variables categóricas
+
+La variable `ampm` está codificada como 1 = AM y 2 = PM. El hecho de que esté almacenada como número no significa que sea cuantitativa.
+
+```{r}
+table(michelson$ampm)
+prop.table(table(michelson$ampm))
+```
+
+Podemos construir etiquetas explícitas:
+
+```{r}
+michelson$periodo <- factor(
+  michelson$ampm,
+  levels = c(1, 2),
+  labels = c("AM", "PM")
+)
+
+table(michelson$periodo)
+```
+
+## Actividad 2 — Frecuencia y proporción
+
+Calcula e interpreta la proporción de observaciones realizadas por la mañana y por la tarde.
+
+Después responde:
+
+> ¿Sería correcto calcular la media de `ampm`? ¿Por qué?
+
+En el estricto sentido será posible, igual que es posible sacar la media del resultado de lanzar una moneda, pero la interpretación de ese resultado no sería razonable dado que no se trata de una variable numérica y un resultado decimal (1.63, para ser exactos) no tiene sentido en el dominio de la variable. 
+
+# 3. Tabla de frecuencias para una variable cuantitativa
+
+Consideremos ahora la temperatura.
+
+```{r}
+range(michelson$temperatura)
+```
+
+Podemos agrupar las temperaturas en intervalos de 10 °F:
+
+```{r}
+intervalos_temp <- cut(
+  michelson$temperatura,
+  breaks = seq(50, 100, by = 10),
+  right = FALSE
+)
+
+tabla_temp <- table(intervalos_temp)
+tabla_temp
+```
+
+## Actividad 3 — ¿Qué significa agrupar?
+
+Explica qué información se pierde al sustituir valores exactos como 71, 72, 73 y 74 por un mismo intervalo.
+
+Después construye una tabla que incluya:
+
+- intervalo,
+- frecuencia absoluta,
+- frecuencia relativa,
+- frecuencia acumulada.
+
+
+Se pierde información de cómo se distribuye realmente la temperatura dentro de cada intervalo. Además, hace más difícil ver los datos atípicos, pues se combinan con datos normales o razonables. 
+
+|Intervalo | Frecuencia absoluta | Frecuencia relativa | Frecuencia absoluta acumulada | Frecuencia relativa acumulada |
+|:---:|:---:|:---:|:---:|:---:|
+| [50,60) | 3 | 0.03 | 3 |0.03 |
+| [60,70) | 17 | 0.17 | 20 |0.20|
+| [70,80) | 43 | 0.43 | 63 |0.63|
+| [80,90) | 32 | 0.32 | 95 |0.95|
+| [90,100) | 5 | 0.05  | 100 |1|
+
+
+
+# 4. Histograma
+
+La velocidad de la luz es una variable cuantitativa continua. Una representación natural de su distribución es el histograma.
+
+```{r}
+ggplot(michelson, aes(x = velocidad)) +
+  geom_histogram(binwidth = 0.05, boundary = 299.6) +
+  labs(
+    title = "Distribución de la velocidad de la luz",
+    x = "Velocidad (millones de m/s)",
+    y = "Frecuencia"
+  )
+```
+
+Ahora cambia el ancho de clase:
+
+```{r}
+ggplot(michelson, aes(x = velocidad)) +
+  geom_histogram(binwidth = 0.10, boundary = 299.6) +
+  labs(x = "Velocidad (millones de m/s)", y = "Frecuencia")
+```
+
+Y prueba un ancho todavía menor:
+
+```{r}
+ggplot(michelson, aes(x = velocidad)) +
+  geom_histogram(binwidth = 0.02, boundary = 299.6) +
+  labs(x = "Velocidad (millones de m/s)", y = "Frecuencia")
+```
+
+## Actividad 4 — El ancho de clase importa
+
+Compara las tres representaciones.
+
+1. ¿Cuál muestra mejor la estructura global?
+
+    La que tiene los intervalos más pequeños, pues se acerca más a las frecuencias puntuales.
+
+2. ¿Cuál introduce más variación visual artificial?
+
+    La que tiene los intervalos más grandes, pues omite información al agrupar tantos valores.
+
+3. ¿Qué ocurre cuando el número de clases es demasiado grande?
+
+    Se aproxima a reflejar mejor el comportamiento continuo de una variable y se representa mejor cada frecuencia.
+
+4. ¿Qué ocurre cuando es demasiado pequeño?
+
+    Se pierde información relevante sobre la frecuencia. 
+
+**Idea clave:** el histograma depende de una decisión de discretización. La gráfica no debe interpretarse sin considerar esa decisión.
+
+
+
+
+# 5. Gráfica de barras para una variable categórica
+
+Para `periodo`, una gráfica de barras es más apropiada que un histograma.
+
+```{r}
+ggplot(michelson, aes(x = periodo)) +
+  geom_bar() +
+  labs(
+    title = "Observaciones por periodo del día",
+    x = "Periodo",
+    y = "Frecuencia"
+  )
+```
+
+Observa la diferencia conceptual:
+
+- **histograma:** variable cuantitativa, intervalos numéricos contiguos;
+- **barras:** categorías, sin interpretar el ancho de las barras como una escala numérica continua.
+
+## Actividad 5 — Elegir la gráfica
+
+Para cada variable decide si usarías barras, histograma o ninguna de las dos como primera opción:
+
+| Variable | Representación | Justificación |
+|:---|:---|:---|
+| velocidad | Histograma | Es una variable cuantitativa continua |
+| temperatura | Histograma | Es una variable cuantitativa |
+| periodo | Barras | Es una variable cualitativa |
+| dia | Ninguna | No es relevante medir la frecuencia de esta variable, pues los días de las mediciones son controladas |
+| conjunto | Ninguna | No es relevante medir la frecuencia de esta variable |
+
+# 6. Boxplot
+
+Un boxplot resume posición y dispersión y permite detectar observaciones alejadas del resto.
+
+```{r}
+ggplot(michelson, aes(y = velocidad)) +
+  geom_boxplot() +
+  labs(
+    title = "Boxplot de la velocidad de la luz",
+    y = "Velocidad (millones de m/s)",
+    x = NULL
+  )
+```
+
+También podemos comparar la velocidad entre AM y PM:
+
+```{r}
+ggplot(michelson, aes(x = periodo, y = velocidad)) +
+  geom_boxplot() +
+  labs(
+    title = "Velocidad de la luz por periodo",
+    x = "Periodo",
+    y = "Velocidad (millones de m/s)"
+  )
+```
+
+## Actividad 6 — Comparación visual
+
+Sin calcular todavía media ni desviación estándar:
+
+1. Compara las medianas.
+
+    La mediana de la tarde es mayor que la mediana de la mañana.
+
+2. Compara el IQR visualmente.
+
+    El IQR de la tarde es mayor que el IQR de la mañana.
+
+3. Busca posibles observaciones atípicas.
+
+    Las que se muestran se encuentran en la mañana, muy alejadas de los valores comunes de las mediciones, llegando a 300.0 y a 299.6.
+
+4. ¿Dirías que existe una diferencia importante entre AM y PM? Justifica solo con la gráfica.
+
+    Basándonos en lo que se observa en la gráfica, teniendo en cienta que estas mediciones están en millones de metros por segundo, sí existe una diferencia importante. 
+
+# 7. Dispersión: dos variables cuantitativas
+
+Una pregunta distinta es si la velocidad observada cambia sistemáticamente con la temperatura.
+
+```{r}
+ggplot(michelson, aes(x = temperatura, y = velocidad)) +
+  geom_point() +
+  labs(
+    title = "Velocidad de la luz y temperatura del aire",
+    x = "Temperatura (°F)",
+    y = "Velocidad (millones de m/s)"
+  )
+```
+
+Esta representación es un **diagrama de dispersión**. A diferencia del histograma, no resume una sola variable: permite observar la relación entre dos variables cuantitativas.
+
+## Actividad 7 — Leer un diagrama de dispersión
+
+Responde:
+
+1. ¿La nube de puntos parece lineal?
+
+    Sí.
+
+2. ¿La relación, si existe, parece positiva o negativa?
+
+    Ligeramente positiva.
+
+3. ¿Observas grupos o patrones diferentes?
+
+    Sí, antes de 70 grados y después.
+
+4. ¿Ves alguna observación potencialmente influyente?
+
+    Las mediciones más altas se encuentran después de los 70 grados.
+
+5. ¿Qué información se perdería si solo calcularas las medias de velocidad y temperatura?
+
+    La forma en la que se distribuyen las mediciones respecto a ambas variables, así como los máximos y mínimos y en qué circunstancias ocurren esas mediciones. También sería difícil distinguir los datos atípicos.
+
+# 8. Reto: una misma variable, distintas preguntas
+
+Considera la variable `velocidad`.
+
+Propón tres preguntas diferentes que puedan formularse sobre ella:
+
+- una pregunta puramente descriptiva;
+
+    **¿Cuál es el comportamiento general de la variable?** -> Se puede resolver con un histograma, porque refleja en dónde se concentran las mediciones y cuáles son las más frecuentes, al menos dentro de los rangos establecidos.
+
+- una pregunta de comparación;
+
+    **¿Cuál es el comportamiento de la velocidad en cada día de la medición?** -> Se puede contestar con un diagrama de caja y bigotes, porque se puede asociar una caja a cada día y el diagrama mostrará el mínimo, el máximo y los cuartiles de las mediciones. 
+
+- una pregunta de asociación.
+
+    **¿La velocidad cambia conforme los días avanzan?** -> Se puede responder con un diagrama de dispersión porque permite visualizar la relación entre ambas variables.
+
+Para cada pregunta indica qué representación gráfica usarías primero y por qué.
+
+# 9. Mini análisis exploratorio
+
+Realiza ahora un pequeño análisis integrador.
+
+## Actividad 8 — Producto final
+
+Entrega una página breve que contenga:
+
+1. una tabla de frecuencias para `periodo`;
+2. un histograma de `velocidad`;
+3. un boxplot de `velocidad` por `periodo`;
+4. un diagrama de dispersión de `temperatura` contra `velocidad`;
+5. una interpretación escrita de cada gráfica.
+
+La interpretación debe responder **qué observas**, **qué no puedes concluir todavía** y **qué pregunta estadística justificaría el siguiente análisis**.
+
+
+### Tabla de frecuencias para periodo
+```{r}
+frec_periodos <- table(michelson$periodo)
+print(frec_periodos)
+```
+
+### Histograma de velocidad
+
+```{r}
+ggplot(michelson, aes(x = velocidad))+
+  geom_histogram(binwidth = 0.01, boundary = 299.6)+
+  labs(
+  title = " Distribución de la velocidad de la luz",
+  x = "Velocidad (millones de m/s)",
+  y = "Frecuencia"
+)
+```
+
+Gracias a la gráfica se puede observar que las mediciones están entre 299.8 y 299.9. Además, tenemos datos cerca de 299.6 y de 300.1, sin embargo el hecho de que se encuentren tan alejados de el resto de datos y con una frecuencia tan baja puede indicar que se trata de datos atípicos. Tan sólo con esta gráfica no se uede concluir todavía cuál es el valor real de la velocidad de la luz, que es el propósito del experimento. 
+
+
+### Boxplot de velocidad por periodo
+
+```{r}
+ggplot(michelson, aes(x = periodo, y = velocidad)) + 
+  geom_boxplot() + 
+  labs(
+    title = "Velocidad de la luz por periodo",
+    x = "Periodo",
+    y = "Velocidad (millones de m/s)"
+  )
+```
+
+A simple vista pareciera que las velocidad aumenta cuando las mediciones se hacen por la tarde. Esta gráfica confirma la teoría del apartado anterior acerca de los datoas atípicos que se encontraban muy alejados del resto de observaciones. Se puede ver que las mediciones de la mañana tienen una dispersión menor, mientras que las de la tarde se encuantran distribuidas entre un rango más amplio de valores. A pesar de esto, gracias a la representación de la mediana y los cuartiles, podemos ver en este gráfico también que la mayoría de las observaciones se concentran entre 299.8 y 299.9.
+
+### Diagrama de dispersión de temperatura contra velocidad
+
+```{r}
+ggplot(michelson, aes(x = temperatura, y= velocidad)) +
+  geom_point() + 
+  labs(
+    title = "Temperatura del aire y velocidad de la luz",
+    x = "Temperatura (Farenheit)",
+    y = "Velocidad (millones de m/s)"
+)
+```
+
+
+# Autoevaluación
+
+Antes de continuar al Tutorial 4, verifica que puedes explicar sin ayuda:
+
+- la diferencia entre frecuencia absoluta y relativa;
+- cuándo usar una gráfica de barras y cuándo un histograma;
+- qué efecto tiene el ancho de clase;
+- qué información resume un boxplot;
+- para qué sirve un diagrama de dispersión;
+- por qué una gráfica debe elegirse a partir de la variable y de la pregunta estadística.
+
+Si alguna respuesta no es clara, regresa a la sección correspondiente y repite la actividad.
